@@ -15,7 +15,10 @@ public class UserEntityMapper {
                 user.getEmail(),
                 user.getSenha(),
                 user.getTelefone(),
-                user.isActive());
+                user.isActive(),
+                user.getCreatedAt(),
+                user.getUpdatedAt()
+                );
     }
 
     public User toDomain(UserJpa userJpa) {
@@ -26,7 +29,9 @@ public class UserEntityMapper {
                 userJpa.getEmail(),
                 userJpa.getSenha(),
                 userJpa.getTelefone(),
-                userJpa.isActive());
+                userJpa.isActive(),
+                userJpa.getCreatedAt(),
+                userJpa.getUpdatedAt());
     }
 
 }

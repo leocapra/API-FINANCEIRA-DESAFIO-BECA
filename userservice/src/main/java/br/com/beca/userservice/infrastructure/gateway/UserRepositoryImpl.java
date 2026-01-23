@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 @Repository
@@ -48,6 +49,9 @@ public class UserRepositoryImpl implements UserRepository {
             entity.setId(isPresentByEmail.get().getId());
         }
 
+        entity.setCreatedAt(LocalDate.now());
+        entity.setUpdatedAt(LocalDate.now());
+
         repository.save(entity);
         return mapper.toDomain(entity);
     }
@@ -61,6 +65,7 @@ public class UserRepositoryImpl implements UserRepository {
                 user.getEmail(),
                 user.getTelefone()
         );
+        existing.setUpdatedAt(LocalDate.now());
         UserJpa saved = repository.save(existing);
         return mapper.toDomain(saved);
     }
@@ -97,6 +102,7 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public void deleteUser(Long id) {
         Optional<UserJpa> find = repository.findByIdAndActiveTrue(id);
+        find.get().setUpdatedAt(LocalDate.now());
         find.get().deactivate();
 
     }
