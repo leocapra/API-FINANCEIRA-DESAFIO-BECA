@@ -2,10 +2,12 @@ package br.com.beca.userservice.infrastructure.persistence.model;
 
 import jakarta.persistence.*;
 import org.jspecify.annotations.Nullable;
+import org.springframework.cglib.core.Local;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -21,24 +23,20 @@ public class UserJpa implements UserDetails {
     private String senha;
     private String telefone;
     private boolean active;
+    private LocalDate createdAt;
+    private LocalDate updatedAt;
 
     public UserJpa(){}
-    public UserJpa(String cpf, String nome, String email, String senha, String telefone){
-        this.cpf = cpf;
-        this.nome = nome;
-        this.email = email;
-        this.senha = senha;
-        this.telefone = telefone;
-        this.active = true;
-    }
 
-    public UserJpa(String cpf, String nome, String email, String senha, String telefone, boolean active) {
+    public UserJpa(String cpf, String nome, String email, String senha, String telefone, boolean active, LocalDate createdAt, LocalDate updatedAt) {
         this.cpf = cpf;
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.telefone = telefone;
         this.active = active;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     public void updateProfile(String nome, String email, String telefone) {
@@ -93,6 +91,22 @@ public class UserJpa implements UserDetails {
 
     public boolean isActive() {
         return active;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public LocalDate getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDate updatedAt) {
+        this.updatedAt = updatedAt;
     }
 
     @Override
