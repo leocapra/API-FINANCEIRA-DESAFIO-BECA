@@ -37,8 +37,7 @@ class UpdateUserUseCaseTest {
                 "Nome Antigo",
                 "old@email.com",
                 "senhaHash",
-                "+55 11 91234-5678",
-                true
+                "+55 11 91234-5678"
         );
     }
 

@@ -8,6 +8,7 @@ import br.com.beca.userservice.domain.model.User;
 import br.com.beca.userservice.domain.pagination.PaginatedResponse;
 import br.com.beca.userservice.infrastructure.gateway.ExcelUserImportMapper;
 import br.com.beca.userservice.infrastructure.gateway.PageMapper;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +23,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/usuarios")
+@SecurityRequirement(name = "bearer-key")
 public class UserController {
 
     private final CreateUserUseCase createUserUseCase;

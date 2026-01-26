@@ -44,7 +44,7 @@ class DeleteUserUseCaseTest {
     @Test
     void shouldDeleteUser_whenUserExistsAndActive() {
         Long id = 10L;
-        User activeUser = new User(id, "123.456.789-09", "Leo", "leo@email.com", "x", "+55 11 91234-5678", true);
+        User activeUser = new User(id, "123.456.789-09", "Leo", "leo@email.com", "x", "+55 11 91234-5678");
 
         when(userRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(activeUser));
 

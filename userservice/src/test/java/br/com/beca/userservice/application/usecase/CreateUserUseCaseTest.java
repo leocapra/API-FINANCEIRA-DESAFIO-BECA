@@ -105,7 +105,7 @@ class CreateUserUseCaseTest {
     @Test
     void shouldThrowAlreadyExistsException_whenCpfExistsAndActive() {
         User input = validUserRawPassword();
-        User existing = new User(1L, input.getCpf(), "Outro", "outro@email.com", "x", "+55 11 91234-5678", true);
+        User existing = new User(1L, input.getCpf(), "Outro", "outro@email.com", "x", "+55 11 91234-5678");
 
         when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.of(existing));
         when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
@@ -120,7 +120,8 @@ class CreateUserUseCaseTest {
     @Test
     void shouldReactivateAndSave_whenCpfExistsAndInactive() throws FieldIsEmptyException, RegexpException {
         User input = validUserRawPassword();
-        User existing = new User(1L, input.getCpf(), "Nome Antigo", "antigo@email.com", "x", "+55 11 91234-5678", false);
+        User existing = new User(1L, input.getCpf(), "Nome Antigo", "antigo@email.com", "x", "+55 11 91234-5678");
+        existing.deactivate();
 
         when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.of(existing));
         when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
@@ -146,7 +147,7 @@ class CreateUserUseCaseTest {
     @Test
     void shouldThrowAlreadyExistsException_whenEmailExistsAndActive() {
         User input = validUserRawPassword();
-        User existing = new User(2L, "999.999.999-99", "Outro", input.getEmail(), "x", "+55 11 91234-5678", true);
+        User existing = new User(2L, "999.999.999-99", "Outro", input.getEmail(), "x", "+55 11 91234-5678");
 
         when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.of(existing));
@@ -161,7 +162,8 @@ class CreateUserUseCaseTest {
     @Test
     void shouldReactivateAndSave_whenEmailExistsAndInactive() throws FieldIsEmptyException, RegexpException {
         User input = validUserRawPassword();
-        User existing = new User(2L, "999.999.999-99", "Outro", input.getEmail(), "x", "+55 11 91234-5678", false);
+        User existing = new User(2L, "999.999.999-99", "Outro", input.getEmail(), "x", "+55 11 91234-5678");
+        existing.deactivate();
 
         when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
         when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.of(existing));

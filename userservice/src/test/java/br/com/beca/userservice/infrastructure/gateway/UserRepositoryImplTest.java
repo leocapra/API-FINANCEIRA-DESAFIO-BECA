@@ -40,8 +40,7 @@ class UserRepositoryImplTest {
                 "Leonardo",
                 "leo@email.com",
                 "senhaHash",
-                "+55 11 91234-5678",
-                true
+                "+55 11 91234-5678"
         );
     }
 
@@ -145,7 +144,7 @@ class UserRepositoryImplTest {
         UserJpa existingByCpf = new UserJpa();
         existingByCpf.setId(99L);
 
-        User domainOut = new User(99L, domainIn.getCpf(), domainIn.getNome(), domainIn.getEmail(), domainIn.getSenha(), domainIn.getTelefone(), true);
+        User domainOut = new User(99L, domainIn.getCpf(), domainIn.getNome(), domainIn.getEmail(), domainIn.getSenha(), domainIn.getTelefone());
 
         when(mapper.toEntity(domainIn)).thenReturn(entity);
         when(repository.findByCpf(domainIn.getCpf())).thenReturn(Optional.of(existingByCpf));
@@ -175,7 +174,7 @@ class UserRepositoryImplTest {
         UserJpa existingByEmail = new UserJpa();
         existingByEmail.setId(77L);
 
-        User domainOut = new User(77L, domainIn.getCpf(), domainIn.getNome(), domainIn.getEmail(), domainIn.getSenha(), domainIn.getTelefone(), true);
+        User domainOut = new User(77L, domainIn.getCpf(), domainIn.getNome(), domainIn.getEmail(), domainIn.getSenha(), domainIn.getTelefone());
 
         when(mapper.toEntity(domainIn)).thenReturn(entity);
         when(repository.findByCpf(domainIn.getCpf())).thenReturn(Optional.empty());
@@ -196,7 +195,7 @@ class UserRepositoryImplTest {
     void saveUser_shouldSaveWithoutSettingId_whenNoCpfOrEmailFound() {
         User domainIn = new User("123.456.789-09", "Leonardo", "leo@email.com", "senha", "+55 11 91234-5678");
         UserJpa entity = new UserJpa(); // id null
-        User domainOut = new User(null, domainIn.getCpf(), domainIn.getNome(), domainIn.getEmail(), domainIn.getSenha(), domainIn.getTelefone(), true);
+        User domainOut = new User(null, domainIn.getCpf(), domainIn.getNome(), domainIn.getEmail(), domainIn.getSenha(), domainIn.getTelefone());
 
         when(mapper.toEntity(domainIn)).thenReturn(entity);
         when(repository.findByCpf(domainIn.getCpf())).thenReturn(Optional.empty());
@@ -224,8 +223,7 @@ class UserRepositoryImplTest {
                 "Nome Novo",
                 "novo@email.com",
                 "senhaHash",
-                "+55 11 91234-5678",
-                true
+                "+55 11 91234-5678"
         );
 
         UserJpa existingJpa = spy(new UserJpa());

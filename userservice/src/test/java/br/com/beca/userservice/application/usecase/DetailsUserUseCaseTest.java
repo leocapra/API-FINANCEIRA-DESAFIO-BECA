@@ -36,8 +36,7 @@ class DetailsUserUseCaseTest {
                 "Leonardo",
                 "leo@email.com",
                 "senha",
-                "+55 11 91234-5678",
-                true
+                "+55 11 91234-5678"
         );
 
         when(userRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(user));
