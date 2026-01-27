@@ -7,7 +7,6 @@ import java.util.UUID;
 
 public record TransactionRequestData(
         UUID userId,
-        TransactionType type,
         BigDecimal amount,
         String currency,
         String sourceAccountId,

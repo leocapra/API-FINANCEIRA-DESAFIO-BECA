@@ -12,7 +12,7 @@ public class Transaction {
     private final TransactionType type;
     private final Money amount;
     private final AccountRef sourceAccount;
-    private final AccountRef targetAccount;
+    private final UUID targetAccount;
     private TransactionStatus status;
     private String description;
     private String category;
@@ -28,7 +28,7 @@ public class Transaction {
             TransactionType type,
             Money amount,
             AccountRef sourceAccount,
-            AccountRef targetAccount,
+            UUID targetAccount,
             String description,
             String category,
             Instant createdAt,
@@ -40,6 +40,7 @@ public class Transaction {
         this.amount = amount;
         this.sourceAccount = sourceAccount;
         this.targetAccount = targetAccount;
+        this.status = TransactionStatus.PENDENTE;
         this.description = description;
         this.category = category;
         this.createdAt = createdAt;
@@ -48,12 +49,41 @@ public class Transaction {
         validateRules();
     }
 
+    public Transaction(
+            UUID id,
+            UUID userId,
+            TransactionType type,
+            Money amount,
+            AccountRef sourceAccount,
+            UUID targetAccount,
+            TransactionStatus status,
+            String description,
+            String category,
+            String rejectionReason,
+            Instant createdAt,
+            Instant processAt,
+            String correlationId) {
+        this.id = id;
+        this.userId = userId;
+        this.type = type;
+        this.amount = amount;
+        this.sourceAccount = sourceAccount;
+        this.targetAccount = targetAccount;
+        this.status = status;
+        this.description = description;
+        this.category = category;
+        this.rejectionReason = rejectionReason;
+        this.createdAt = createdAt;
+        this.processAt = processAt;
+        this.correlationId = correlationId;
+    }
+
     public static Transaction createPending(
             UUID userId,
             TransactionType type,
             Money amount,
             AccountRef sourceAccount,
-            AccountRef targetAccount,
+            UUID targetAccount,
             String description,
             String category
     ){
@@ -112,7 +142,7 @@ public class Transaction {
         return sourceAccount;
     }
 
-    public AccountRef getTargetAccount() {
+    public UUID getTargetAccount() {
         return targetAccount;
     }
 

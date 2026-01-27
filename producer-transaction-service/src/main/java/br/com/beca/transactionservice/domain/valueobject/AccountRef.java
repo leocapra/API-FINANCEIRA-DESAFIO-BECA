@@ -1,8 +1,10 @@
 package br.com.beca.transactionservice.domain.valueobject;
 
-public record AccountRef(String accountId) {
+import java.util.UUID;
+
+public record AccountRef(UUID accountId) {
     public AccountRef {
-        if (accountId == null || accountId.isBlank()){
+        if (accountId == null){
             throw new IllegalArgumentException("AccountId é obrigatório!");
         }
     }

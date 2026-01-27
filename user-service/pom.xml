@@ -9,9 +9,9 @@
         <relativePath/>
     </parent>
     <groupId>br.com.beca</groupId>
-    <artifactId>userservice</artifactId>
+    <artifactId>user-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>userservice</name>
+    <name>user-service</name>
     <description>serviço de usuarios</description>
     <url/>
     <licenses>
