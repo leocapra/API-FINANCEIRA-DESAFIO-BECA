@@ -1,6 +1,7 @@
 package br.com.beca.userservice.infrastructure.persistence.model;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.UuidGenerator;
 import org.jspecify.annotations.Nullable;
 import org.springframework.cglib.core.Local;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,7 +17,8 @@ import java.util.UUID;
 @Table(name = "users")
 public class UserJpa implements UserDetails {
     @Id
-    @GeneratedValue(strategy =  GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "uuid",nullable = false, updatable = false)
     private UUID id;
     private String cpf;
     private String nome;
