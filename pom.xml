@@ -9,9 +9,9 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>br.com.beca</groupId>
-    <artifactId>consumer-transaction-service</artifactId>
+    <artifactId>transactionservice</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>consumer-transaction-service</name>
+    <name>api-transactions</name>
     <description>um servico de transacao</description>
     <url/>
     <licenses>
