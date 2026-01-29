@@ -16,6 +16,20 @@ public record ProcessDepositUseCase(TransactionRepository repository, BankAccoun
         Transaction transaction = repository.findById(event.transactionId()).orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + event.transactionId()));
         BankAccount account = bankRepository.findByUserId(transaction.getUserId().toString());
 
+        if (event.record()) {
+            if (!event.currency().equals("BRL")) {
+                BigDecimal newAmount = converter.toBrl(event.amount(), event.currency());
+                BigDecimal fxRate = converter.fxRate(event.currency());
+                transaction.approve();
+                transaction.toBrl(newAmount, fxRate);
+                repository.save(transaction);
+                return;
+            }
+            transaction.approve();
+            repository.save(transaction);
+            return;
+        }
+
 
         if (!account.active()) {
             transaction.reject("Conta está desativada!");
@@ -40,6 +54,7 @@ public record ProcessDepositUseCase(TransactionRepository repository, BankAccoun
             transaction.approve();
             transaction.toBrl(newAmount, fxRate);
             repository.save(transaction);
+            return;
         }
             bankRepository.deposit(event.uuid().toString(), event.amount());
             transaction.approve();

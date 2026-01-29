@@ -38,7 +38,8 @@ public record CreateWithdrawalUseCase(TransactionRepository repository, Transact
                 saved.getDescription(),
                 saved.getCategory(),
                 saved.getCreatedAt(),
-                saved.getCorrelationId()
+                saved.getCorrelationId(),
+                dto.record()
         );
         publisher.publish(event);
 
