@@ -3,6 +3,7 @@ package br.com.beca.transactionservice.domain.model;
 import br.com.beca.transactionservice.domain.valueobject.AccountRef;
 import br.com.beca.transactionservice.domain.valueobject.Money;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -17,10 +18,11 @@ public class Transaction {
     private String description;
     private String category;
     private String rejectionReason;
-
     private final Instant createdAt;
     private Instant processAt;
     private final String correlationId;
+    private BigDecimal brl;
+    private BigDecimal fxRate;
 
     private Transaction(
             UUID id,
@@ -62,7 +64,10 @@ public class Transaction {
             String rejectionReason,
             Instant createdAt,
             Instant processAt,
-            String correlationId) {
+            String correlationId,
+            BigDecimal brl,
+            BigDecimal fxRate
+    ) {
         this.id = id;
         this.userId = userId;
         this.type = type;
@@ -76,6 +81,8 @@ public class Transaction {
         this.createdAt = createdAt;
         this.processAt = processAt;
         this.correlationId = correlationId;
+        this.brl = brl;
+        this.fxRate = fxRate;
     }
 
     public static Transaction createPending(
@@ -120,6 +127,11 @@ public class Transaction {
         if (type.requiresTargetAccount() && targetAccount == null){
             throw new IllegalArgumentException(type + " conta destino é obrigatória!");
         }
+    }
+
+    public void toBrl(BigDecimal brl, BigDecimal fxRate){
+        this.brl = brl;
+        this.fxRate = fxRate;
     }
 
     public UUID getId() {
@@ -174,4 +186,11 @@ public class Transaction {
         return correlationId;
     }
 
+    public BigDecimal getBrl() {
+        return brl;
+    }
+
+    public BigDecimal getFxRate() {
+        return fxRate;
+    }
 }

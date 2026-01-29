@@ -7,15 +7,15 @@ import br.com.beca.transactionservice.domain.dto.BankAccount;
 import br.com.beca.transactionservice.domain.event.TransactionRequestedEvent;
 import br.com.beca.transactionservice.domain.model.Transaction;
 import br.com.beca.transactionservice.domain.model.TransactionStatus;
+import br.com.beca.transactionservice.domain.model.TransactionType;
 
 import java.math.BigDecimal;
 
-public record ProcessDepositUseCase(TransactionRepository repository, BankAccountPort bankRepository, CurrencyConverterPort converter) {
+public record ProcessWithdrawalUseCase(TransactionRepository repository, BankAccountPort bankRepository, CurrencyConverterPort converter) {
     public void execute(TransactionRequestedEvent event) {
 
         Transaction transaction = repository.findById(event.transactionId()).orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + event.transactionId()));
         BankAccount account = bankRepository.findByUserId(transaction.getUserId().toString());
-
 
         if (!account.active()) {
             transaction.reject("Conta está desativada!");
@@ -24,7 +24,7 @@ public record ProcessDepositUseCase(TransactionRepository repository, BankAccoun
         }
 
         if (!account.currency().equals("BRL")) {
-            transaction.reject("Só aceitamos contas em brasileiras, formato " + account.currency() + " inválido!");
+            transaction.reject("Só aceitamos contas brasileiras, formato " + account.currency() + " inválido!");
             repository.save(transaction);
             return;
         }
@@ -36,14 +36,28 @@ public record ProcessDepositUseCase(TransactionRepository repository, BankAccoun
         if (!event.currency().equals("BRL")) {
             BigDecimal newAmount = converter.toBrl(event.amount(), event.currency());
             BigDecimal fxRate = converter.fxRate(event.currency());
-            bankRepository.deposit(event.uuid().toString(), newAmount);
+            if (newAmount.compareTo(account.balance()) > 0){
+                transaction.reject("Saldo indisponível!");
+                repository.save(transaction);
+                return;
+            }
+            bankRepository.withdrawal(event.uuid().toString(), newAmount);
             transaction.approve();
             transaction.toBrl(newAmount, fxRate);
             repository.save(transaction);
+            return;
         }
-            bankRepository.deposit(event.uuid().toString(), event.amount());
-            transaction.approve();
+
+        if (event.amount().compareTo(account.balance()) > 0){
+            transaction.reject("Saldo indisponível!");
             repository.save(transaction);
+            return;
+        }
+
+        bankRepository.withdrawal(event.uuid().toString(), event.amount());
+        transaction.approve();
+        repository.save(transaction);
+
 
     }
 }

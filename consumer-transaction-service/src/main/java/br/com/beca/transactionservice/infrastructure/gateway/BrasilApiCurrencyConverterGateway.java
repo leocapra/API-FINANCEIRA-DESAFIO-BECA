@@ -23,20 +23,27 @@ public class BrasilApiCurrencyConverterGateway implements CurrencyConverterPort 
     }
 
     @Override
+    public BigDecimal fxRate( String currency) {
+        if (currency == null || currency.isBlank()) {
+            throw new IllegalArgumentException("currency é obrigatória");
+        }
+        String c = currency.trim().toUpperCase();
+        if ("BRL".equals(c)) {
+            return BigDecimal.ONE.setScale(2, RoundingMode.HALF_EVEN);
+        }
+        LocalDate targetDate = exchangeDate(LocalDate.now());
+        return getBrlPerUnit(c, targetDate);
+    }
+
+    @Override
     public BigDecimal toBrl(BigDecimal amount, String currency) {
         if (amount == null) throw new IllegalArgumentException("amount é obrigatório");
-        if (currency == null || currency.isBlank()) throw new IllegalArgumentException("currency é obrigatória");
 
-        String c = currency.toUpperCase();
+        BigDecimal rate = fxRate(currency);
 
-        if ("BRL".equals(c)) {
-            return amount.setScale(2, RoundingMode.HALF_EVEN);
-        }
-
-        LocalDate today = exchangeDate(LocalDate.now());
-        BigDecimal rate = getBrlPerUnit(c, today);
         return amount.multiply(rate).setScale(2, RoundingMode.HALF_EVEN);
     }
+
 
     private BigDecimal getBrlPerUnit(String currency, LocalDate date) {
         String key = currency + ":" + date;

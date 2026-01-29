@@ -4,4 +4,5 @@ import java.math.BigDecimal;
 
 public interface CurrencyConverterPort {
     BigDecimal toBrl(BigDecimal amount, String currency);
+    BigDecimal fxRate(String currency);
 }

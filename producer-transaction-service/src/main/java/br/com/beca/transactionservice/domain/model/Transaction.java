@@ -3,6 +3,7 @@ package br.com.beca.transactionservice.domain.model;
 import br.com.beca.transactionservice.domain.valueobject.AccountRef;
 import br.com.beca.transactionservice.domain.valueobject.Money;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -17,10 +18,12 @@ public class Transaction {
     private String description;
     private String category;
     private String rejectionReason;
-
     private final Instant createdAt;
     private Instant processAt;
     private final String correlationId;
+    private BigDecimal brl;
+    private BigDecimal fxRate;
+
 
     private Transaction(
             UUID id,
@@ -172,5 +175,13 @@ public class Transaction {
 
     public String getCorrelationId() {
         return correlationId;
+    }
+
+    public BigDecimal getBrl() {
+        return brl;
+    }
+
+    public BigDecimal getFxRate() {
+        return fxRate;
     }
 }

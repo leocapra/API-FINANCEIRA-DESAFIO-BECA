@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 
 public interface BankAccountPort {
     void deposit(String userId, BigDecimal amount);
+    void withdrawal(String userId, BigDecimal amount);
     BankAccount findByUserId(String userId);
 
 }

@@ -2,9 +2,11 @@ package br.com.beca.transactionservice.infrastructure.gateway;
 
 import br.com.beca.transactionservice.application.port.TransactionRepository;
 import br.com.beca.transactionservice.domain.model.Transaction;
+import br.com.beca.transactionservice.infrastructure.persistence.model.TransactionEntity;
 import br.com.beca.transactionservice.infrastructure.persistence.repository.TransactionJpaRepository;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,4 +28,5 @@ public class TransactionRepositoryAdapter implements TransactionRepository {
     public Optional<Transaction> findById(UUID id) {
         return jpa.findById(id).map(TransactionMapper::toDomain);
     }
+
 }

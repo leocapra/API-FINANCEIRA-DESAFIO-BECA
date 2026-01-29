@@ -10,27 +10,39 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 @Component
-public class MockApiDeposit implements BankAccountPort {
+public class MockApiAdapter implements BankAccountPort {
     private final RestClient client;
     private final String endpoint;
-    private final MockApiGetClient getClient;
 
-    public MockApiDeposit(
+    public MockApiAdapter(
             @Value("${mockapi.base-url}") String baseUrl,
-            @Value("${mockapi.resource}") String endpoint, MockApiGetClient getClient
+            @Value("${mockapi.resource}") String endpoint
     ) {
         this.client = RestClient.builder()
                 .baseUrl(baseUrl)
                 .build();
         this.endpoint = endpoint;
-        this.getClient = getClient;
     }
 
     @Override
     public void deposit(String userId, BigDecimal amount) {
-        BankAccount clientAccount = getClient.getAccountByUserId(userId);
+        BankAccount clientAccount = this.findByUserId(userId);
         var payload = Map.of("balance", clientAccount.balance().add(amount));
 
+        client.put()
+                .uri(u -> u
+                        .path(endpoint + "/" + clientAccount.id())
+                        .build()
+                )
+                .body(payload)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    @Override
+    public void withdrawal(String userId, BigDecimal amount) {
+        BankAccount clientAccount = this.findByUserId(userId);
+        var payload = Map.of("balance", clientAccount.balance().subtract(amount));
         client.put()
                 .uri(u -> u
                         .path(endpoint + "/" + clientAccount.id())

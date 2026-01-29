@@ -49,9 +49,14 @@ public class TransactionEntity {
 
     private String rejectionReason;
 
+    private BigDecimal brl;
+
+    private BigDecimal fxRate;
+
+
     public TransactionEntity() {}
 
-    public TransactionEntity(UUID id, UUID userId, TransactionType type, TransactionStatus status, BigDecimal amount, String currency, UUID sourceAccountId, UUID targetAccountId, String description, String category, Instant createdAt, Instant processedAt, String correlationId, String rejectionReason) {
+    public TransactionEntity(UUID id, UUID userId, TransactionType type, TransactionStatus status, BigDecimal amount, String currency, UUID sourceAccountId, UUID targetAccountId, String description, String category, Instant createdAt, Instant processedAt, String correlationId, String rejectionReason, BigDecimal brl, BigDecimal fxRate) {
         this.id = id;
         this.userId = userId;
         this.type = type;
@@ -66,6 +71,8 @@ public class TransactionEntity {
         this.processedAt = processedAt;
         this.correlationId = correlationId;
         this.rejectionReason = rejectionReason;
+        this.brl = brl;
+        this.fxRate = fxRate;
     }
 
     public UUID getId() {
@@ -122,5 +129,13 @@ public class TransactionEntity {
 
     public String getRejectionReason() {
         return rejectionReason;
+    }
+
+    public BigDecimal getBrl() {
+        return brl;
+    }
+
+    public BigDecimal getFxRate() {
+        return fxRate;
     }
 }
