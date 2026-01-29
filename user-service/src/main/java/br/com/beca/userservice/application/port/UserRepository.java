@@ -1,11 +1,9 @@
-package br.com.beca.userservice.application.repository;
+package br.com.beca.userservice.application.port;
 
-import br.com.beca.userservice.domain.exception.FieldIsEmptyException;
 import br.com.beca.userservice.domain.model.User;
 import br.com.beca.userservice.domain.pagination.PageDataDomain;
 import br.com.beca.userservice.domain.pagination.PaginatedResponse;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 

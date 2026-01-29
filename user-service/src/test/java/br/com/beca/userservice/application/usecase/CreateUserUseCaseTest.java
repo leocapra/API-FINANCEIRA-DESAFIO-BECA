@@ -1,7 +1,7 @@
 package br.com.beca.userservice.application.usecase;
 
-import br.com.beca.userservice.application.repository.UserRepository;
-import br.com.beca.userservice.domain.PasswordHasher;
+import br.com.beca.userservice.application.port.UserRepository;
+import br.com.beca.userservice.application.port.PasswordHasher;
 import br.com.beca.userservice.domain.exception.AlreadyExistsException;
 import br.com.beca.userservice.domain.exception.FieldIsEmptyException;
 import br.com.beca.userservice.domain.exception.RegexpException;

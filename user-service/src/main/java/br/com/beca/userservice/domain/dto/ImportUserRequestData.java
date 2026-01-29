@@ -1,5 +1,6 @@
 package br.com.beca.userservice.domain.dto;
 
+
 public record ImportUserRequestData(
         String nome,
         String cpf,

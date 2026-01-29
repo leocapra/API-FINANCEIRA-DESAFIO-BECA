@@ -1,4 +1,4 @@
-package br.com.beca.userservice.domain;
+package br.com.beca.userservice.application.port;
 
 public interface PasswordHasher {
     String hash(String rawPassword);

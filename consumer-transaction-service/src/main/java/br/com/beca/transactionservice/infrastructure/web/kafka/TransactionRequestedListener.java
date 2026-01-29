@@ -1,4 +1,4 @@
-package br.com.beca.transactionservice.infrastructure.web.kafkalistener;
+package br.com.beca.transactionservice.infrastructure.web.kafka;
 
 import br.com.beca.transactionservice.application.usecase.ProcessDepositUseCase;
 import br.com.beca.transactionservice.domain.event.TransactionRequestedEvent;

@@ -1,6 +1,7 @@
 package br.com.beca.userservice.infrastructure.gateway;
 
-import br.com.beca.userservice.application.repository.UserRepository;
+import br.com.beca.userservice.application.port.BankAccountProvisioningGateway;
+import br.com.beca.userservice.application.port.UserRepository;
 import br.com.beca.userservice.domain.exception.NotFoundException;
 import br.com.beca.userservice.domain.model.User;
 import br.com.beca.userservice.domain.pagination.PageDataDomain;
@@ -20,10 +21,12 @@ import java.util.UUID;
 public class UserRepositoryImpl implements UserRepository {
     private final UserRepositoryJpa repository;
     private final UserEntityMapper mapper;
+    private final BankAccountProvisioningGateway bankGateway;
 
-    public UserRepositoryImpl(UserRepositoryJpa repository, UserEntityMapper mapper) {
+    public UserRepositoryImpl(UserRepositoryJpa repository, UserEntityMapper mapper, BankAccountProvisioningGateway bankGateway) {
         this.repository = repository;
         this.mapper = mapper;
+        this.bankGateway = bankGateway;
     }
 
     @Override
@@ -39,22 +42,13 @@ public class UserRepositoryImpl implements UserRepository {
     @Override
     public User saveUser(User user) {
         UserJpa entity = mapper.toEntity(user);
-        Optional<UserJpa> isPresentByCpf = repository.findByCpf(user.getCpf());
-        Optional<UserJpa> isPresentByEmail = repository.findByEmail(user.getEmail());
-
-        if (isPresentByCpf.isPresent()){
-            entity.setId(isPresentByCpf.get().getId());
-        }
-
-        if (isPresentByEmail.isPresent()){
-            entity.setId(isPresentByEmail.get().getId());
-        }
-
         entity.setCreatedAt(LocalDate.now());
         entity.setUpdatedAt(LocalDate.now());
 
-        repository.save(entity);
-        return mapper.toDomain(entity);
+        UserJpa saved = repository.save(entity);
+        bankGateway.createAccountForUser(saved.getId().toString(), saved.getEmail());
+
+        return mapper.toDomain(saved);
     }
 
     @Override

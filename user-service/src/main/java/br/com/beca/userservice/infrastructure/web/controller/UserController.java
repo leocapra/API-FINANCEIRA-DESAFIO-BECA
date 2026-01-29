@@ -123,7 +123,6 @@ public class UserController {
     }
 
     @PostMapping(value = "/importar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @Transactional
     public ResponseEntity<ImportResponseData> importUsers(@RequestPart("file") MultipartFile file) {
 
         List<ImportUserRequestData> parsed =

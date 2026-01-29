@@ -1,7 +1,6 @@
 package br.com.beca.userservice.domain.model;
 
-import br.com.beca.userservice.domain.PasswordHasher;
-import org.springframework.cglib.core.Local;
+import br.com.beca.userservice.application.port.PasswordHasher;
 
 import java.time.LocalDate;
 import java.util.UUID;

@@ -1,6 +1,6 @@
 package br.com.beca.userservice.infrastructure.gateway;
 
-import br.com.beca.userservice.domain.PasswordHasher;
+import br.com.beca.userservice.application.port.PasswordHasher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 

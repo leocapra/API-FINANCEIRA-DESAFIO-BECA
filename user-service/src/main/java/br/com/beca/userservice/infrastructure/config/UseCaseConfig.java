@@ -1,8 +1,9 @@
 package br.com.beca.userservice.infrastructure.config;
 
-import br.com.beca.userservice.application.repository.UserRepository;
+import br.com.beca.userservice.application.port.BankAccountProvisioningGateway;
+import br.com.beca.userservice.application.port.UserRepository;
 import br.com.beca.userservice.application.usecase.*;
-import br.com.beca.userservice.domain.PasswordHasher;
+import br.com.beca.userservice.application.port.PasswordHasher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
