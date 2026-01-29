@@ -17,7 +17,7 @@ public record ProcessWithdrawalUseCase(TransactionRepository repository, BankAcc
         Transaction transaction = repository.findById(event.transactionId()).orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + event.transactionId()));
         BankAccount account = bankRepository.findByUserId(transaction.getUserId().toString());
 
-        if (event.record()) {
+        if (event.record() != null) {
             if (!event.currency().equals("BRL")) {
                 BigDecimal newAmount = converter.toBrl(event.amount(), event.currency());
                 BigDecimal fxRate = converter.fxRate(event.currency());

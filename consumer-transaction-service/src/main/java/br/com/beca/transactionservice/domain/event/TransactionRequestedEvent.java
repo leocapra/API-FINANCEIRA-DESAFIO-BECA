@@ -18,6 +18,6 @@ public record TransactionRequestedEvent(
         String categoty,
         Instant createdAt,
         String correlationId,
-        boolean record
+        Boolean record
 ) {
 }

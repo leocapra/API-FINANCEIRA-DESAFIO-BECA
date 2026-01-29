@@ -11,6 +11,6 @@ public record TransactionRequestData(
         String targetAccountId,
         String description,
         String category,
-        boolean record
+        Boolean record
 ) {
 }
