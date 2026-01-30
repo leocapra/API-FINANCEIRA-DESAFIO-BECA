@@ -23,33 +23,9 @@ public class Transaction {
     private final String correlationId;
     private BigDecimal brl;
     private BigDecimal fxRate;
-
-    private Transaction(
-            UUID id,
-            UUID userId,
-            TransactionType type,
-            Money amount,
-            AccountRef sourceAccount,
-            UUID targetAccount,
-            String description,
-            String category,
-            Instant createdAt,
-            String correlationId
-    ) {
-        this.id = id;
-        this.userId = userId;
-        this.type = type;
-        this.amount = amount;
-        this.sourceAccount = sourceAccount;
-        this.targetAccount = targetAccount;
-        this.status = TransactionStatus.PENDENTE;
-        this.description = description;
-        this.category = category;
-        this.createdAt = createdAt;
-        this.correlationId = correlationId;
-
-        validateRules();
-    }
+    private Boolean record;
+    private TransferType transferType;
+    private BuyType buyType;
 
     public Transaction(
             UUID id,
@@ -66,7 +42,10 @@ public class Transaction {
             Instant processAt,
             String correlationId,
             BigDecimal brl,
-            BigDecimal fxRate
+            BigDecimal fxRate,
+            Boolean record,
+            TransferType transferType,
+            BuyType buyType
     ) {
         this.id = id;
         this.userId = userId;
@@ -83,29 +62,9 @@ public class Transaction {
         this.correlationId = correlationId;
         this.brl = brl;
         this.fxRate = fxRate;
-    }
-
-    public static Transaction createPending(
-            UUID userId,
-            TransactionType type,
-            Money amount,
-            AccountRef sourceAccount,
-            UUID targetAccount,
-            String description,
-            String category
-    ){
-        return new Transaction(
-                UUID.randomUUID(),
-                userId,
-                type,
-                amount,
-                sourceAccount,
-                targetAccount,
-                description,
-                category,
-                Instant.now(),
-                UUID.randomUUID().toString()
-        );
+        this.record = record;
+        this.transferType = transferType;
+        this.buyType = buyType;
     }
 
     public void approve() {
@@ -117,16 +76,6 @@ public class Transaction {
         this.status = TransactionStatus.REJEITADA;
         this.rejectionReason = reason;
         this.processAt = Instant.now();
-    }
-
-    private void validateRules(){
-        if (userId == null) throw new IllegalArgumentException("UserId é obrigatório!");
-        if (type == null) throw new IllegalArgumentException("Transaction Type é obrigatório!");
-        if (sourceAccount == null) throw new IllegalArgumentException("Source account é obrigatório!");
-
-        if (type.requiresTargetAccount() && targetAccount == null){
-            throw new IllegalArgumentException(type + " conta destino é obrigatória!");
-        }
     }
 
     public void toBrl(BigDecimal brl, BigDecimal fxRate){
@@ -192,5 +141,17 @@ public class Transaction {
 
     public BigDecimal getFxRate() {
         return fxRate;
+    }
+
+    public Boolean getRecord() {
+        return record;
+    }
+
+    public TransferType getTransferType() {
+        return transferType;
+    }
+
+    public BuyType getBuyType() {
+        return buyType;
     }
 }

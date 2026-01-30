@@ -1,7 +1,9 @@
 package br.com.beca.transactionservice.infrastructure.persistence.model;
 
+import br.com.beca.transactionservice.domain.model.BuyType;
 import br.com.beca.transactionservice.domain.model.TransactionStatus;
 import br.com.beca.transactionservice.domain.model.TransactionType;
+import br.com.beca.transactionservice.domain.model.TransferType;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -53,10 +55,38 @@ public class TransactionEntity {
 
     private BigDecimal fxRate;
 
+    private Boolean record;
+
+    @Enumerated(EnumType.STRING)
+    private TransferType transferType;
+
+    @Enumerated(EnumType.STRING)
+    private BuyType buyType;
+
 
     public TransactionEntity() {}
 
-    public TransactionEntity(UUID id, UUID userId, TransactionType type, TransactionStatus status, BigDecimal amount, String currency, UUID sourceAccountId, UUID targetAccountId, String description, String category, Instant createdAt, Instant processedAt, String correlationId, String rejectionReason) {
+    public TransactionEntity(
+            UUID id,
+            UUID userId,
+            TransactionType type,
+            TransactionStatus status,
+            BigDecimal amount,
+            String currency,
+            UUID sourceAccountId,
+            UUID targetAccountId,
+            String description,
+            String category,
+            Instant createdAt,
+            Instant processedAt,
+            String correlationId,
+            String rejectionReason,
+            BigDecimal brl,
+            BigDecimal fxRate,
+            Boolean record,
+            TransferType transferType,
+            BuyType buyType
+    ) {
         this.id = id;
         this.userId = userId;
         this.type = type;
@@ -71,6 +101,11 @@ public class TransactionEntity {
         this.processedAt = processedAt;
         this.correlationId = correlationId;
         this.rejectionReason = rejectionReason;
+        this.brl = brl;
+        this.fxRate = fxRate;
+        this.record = record;
+        this.transferType = transferType;
+        this.buyType = buyType;
     }
 
     public UUID getId() {
@@ -135,5 +170,17 @@ public class TransactionEntity {
 
     public BigDecimal getFxRate() {
         return fxRate;
+    }
+
+    public Boolean getRecord() {
+        return record;
+    }
+
+    public TransferType getTransferType() {
+        return transferType;
+    }
+
+    public BuyType getBuyType() {
+        return buyType;
     }
 }

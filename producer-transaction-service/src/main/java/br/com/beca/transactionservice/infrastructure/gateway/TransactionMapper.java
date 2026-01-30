@@ -12,7 +12,6 @@ public final class TransactionMapper {
 
     public static TransactionEntity toEntity(Transaction tx){
 
-        System.out.println("tx.getsource  " + tx.getSourceAccount() + " " + tx.getTargetAccount());
         return new TransactionEntity(
                 tx.getId(),
                 tx.getUserId(),
@@ -27,7 +26,12 @@ public final class TransactionMapper {
                 tx.getCreatedAt(),
                 tx.getProcessAt(),
                 tx.getCorrelationId(),
-                tx.getRejectionReason()
+                tx.getRejectionReason(),
+                tx.getBrl(),
+                tx.getFxRate(),
+                tx.getRecord(),
+                tx.getTransferType(),
+                tx.getBuyType()
         );
     }
 
@@ -45,7 +49,12 @@ public final class TransactionMapper {
                 tx.getRejectionReason(),
                 tx.getCreatedAt(),
                 tx.getProcessedAt(),
-                tx.getCorrelationId()
+                tx.getCorrelationId(),
+                tx.getBrl(),
+                tx.getFxRate(),
+                tx.getRecord(),
+                tx.getTransferType(),
+                tx.getBuyType()
         );
     }
 }

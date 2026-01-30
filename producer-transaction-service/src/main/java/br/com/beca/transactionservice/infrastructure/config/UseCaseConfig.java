@@ -2,7 +2,9 @@ package br.com.beca.transactionservice.infrastructure.config;
 
 import br.com.beca.transactionservice.application.port.TransactionEventPublisher;
 import br.com.beca.transactionservice.application.port.TransactionRepository;
+import br.com.beca.transactionservice.application.usecase.CreateBuyUseCase;
 import br.com.beca.transactionservice.application.usecase.CreateDepositUseCase;
+import br.com.beca.transactionservice.application.usecase.CreateTransferUseCase;
 import br.com.beca.transactionservice.application.usecase.CreateWithdrawalUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,4 +21,16 @@ public class UseCaseConfig {
     public CreateWithdrawalUseCase createWithdrawalUseCase(TransactionRepository transactionRepository, TransactionEventPublisher publisher){
         return new CreateWithdrawalUseCase(transactionRepository, publisher);
     }
+
+    @Bean
+    public CreateTransferUseCase createTransferUseCase(TransactionRepository transactionRepository, TransactionEventPublisher publisher){
+        return new CreateTransferUseCase(transactionRepository, publisher);
+    }
+
+    @Bean
+    public CreateBuyUseCase createBuyUseCase(TransactionRepository transactionRepository, TransactionEventPublisher publisher){
+        return new CreateBuyUseCase(transactionRepository, publisher);
+    }
+
+
 }

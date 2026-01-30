@@ -1,6 +1,8 @@
 package br.com.beca.transactionservice.domain.event;
 
+import br.com.beca.transactionservice.domain.model.BuyType;
 import br.com.beca.transactionservice.domain.model.TransactionType;
+import br.com.beca.transactionservice.domain.model.TransferType;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -18,6 +20,8 @@ public record TransactionRequestedEvent(
         String categoty,
         Instant createdAt,
         String correlationId,
-        Boolean record
+        Boolean record,
+        TransferType transferType,
+        BuyType buyType
 ) {
 }

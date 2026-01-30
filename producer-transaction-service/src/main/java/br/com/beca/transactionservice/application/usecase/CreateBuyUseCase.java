@@ -2,7 +2,7 @@ package br.com.beca.transactionservice.application.usecase;
 
 import br.com.beca.transactionservice.application.port.TransactionEventPublisher;
 import br.com.beca.transactionservice.application.port.TransactionRepository;
-import br.com.beca.transactionservice.domain.dto.TransactionDepositData;
+import br.com.beca.transactionservice.domain.dto.TransactionBuyData;
 import br.com.beca.transactionservice.domain.dto.TransactionRequestData;
 import br.com.beca.transactionservice.domain.event.TransactionRequestedEvent;
 import br.com.beca.transactionservice.domain.model.Transaction;
@@ -10,11 +10,10 @@ import br.com.beca.transactionservice.domain.model.TransactionType;
 import br.com.beca.transactionservice.domain.valueobject.AccountRef;
 import br.com.beca.transactionservice.domain.valueobject.Money;
 
-public record CreateDepositUseCase(TransactionRepository repository, TransactionEventPublisher publisher) {
+public record CreateBuyUseCase(TransactionRepository repository, TransactionEventPublisher publisher) {
 
-
-    public Transaction execute(TransactionDepositData dto) {
-        TransactionType type = TransactionType.DEPOSITO;
+    public Transaction execute(TransactionBuyData dto) {
+        TransactionType type = TransactionType.COMPRA;
 
 
         Transaction tx = Transaction.createPending(
@@ -23,11 +22,11 @@ public record CreateDepositUseCase(TransactionRepository repository, Transaction
                 new Money(dto.amount(), dto.currency()),
                 new AccountRef(dto.userId()),
                 null,
-                null,
-                null,
+                dto.description(),
+                dto.category(),
                 dto.record(),
                 null,
-                null
+                dto.buyType()
         );
 
         Transaction saved = repository.save(tx);

@@ -28,7 +28,10 @@ public final class TransactionMapper {
                 tx.getCorrelationId(),
                 tx.getRejectionReason(),
                 tx.getBrl(),
-                tx.getFxRate()
+                tx.getFxRate(),
+                tx.getRecord(),
+                tx.getTransferType(),
+                tx.getBuyType()
         );
     }
 
@@ -48,7 +51,10 @@ public final class TransactionMapper {
                 tx.getProcessedAt(),
                 tx.getCorrelationId(),
                 tx.getBrl(),
-                tx.getFxRate()
+                tx.getFxRate(),
+                tx.getRecord(),
+                tx.getTransferType(),
+                tx.getBuyType()
         );
     }
 }

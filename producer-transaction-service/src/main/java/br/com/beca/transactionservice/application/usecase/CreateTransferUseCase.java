@@ -2,31 +2,32 @@ package br.com.beca.transactionservice.application.usecase;
 
 import br.com.beca.transactionservice.application.port.TransactionEventPublisher;
 import br.com.beca.transactionservice.application.port.TransactionRepository;
-import br.com.beca.transactionservice.domain.dto.TransactionDepositData;
 import br.com.beca.transactionservice.domain.dto.TransactionRequestData;
+import br.com.beca.transactionservice.domain.dto.TransactionTransferData;
 import br.com.beca.transactionservice.domain.event.TransactionRequestedEvent;
 import br.com.beca.transactionservice.domain.model.Transaction;
 import br.com.beca.transactionservice.domain.model.TransactionType;
+import br.com.beca.transactionservice.domain.model.TransferType;
 import br.com.beca.transactionservice.domain.valueobject.AccountRef;
 import br.com.beca.transactionservice.domain.valueobject.Money;
 
-public record CreateDepositUseCase(TransactionRepository repository, TransactionEventPublisher publisher) {
+import java.util.UUID;
 
+public record CreateTransferUseCase(TransactionRepository repository, TransactionEventPublisher publisher) {
 
-    public Transaction execute(TransactionDepositData dto) {
-        TransactionType type = TransactionType.DEPOSITO;
-
+    public Transaction execute(TransactionTransferData dto) {
+        TransactionType type = TransactionType.TRANSFERENCIA;
 
         Transaction tx = Transaction.createPending(
                 dto.userId(),
                 type,
                 new Money(dto.amount(), dto.currency()),
                 new AccountRef(dto.userId()),
-                null,
+                UUID.fromString(dto.targetAccountId()),
                 null,
                 null,
                 dto.record(),
-                null,
+                dto.transferType(),
                 null
         );
 
@@ -52,4 +53,5 @@ public record CreateDepositUseCase(TransactionRepository repository, Transaction
 
         return saved;
     }
+
 }

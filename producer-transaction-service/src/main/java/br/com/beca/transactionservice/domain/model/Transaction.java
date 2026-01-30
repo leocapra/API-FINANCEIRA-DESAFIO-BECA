@@ -23,34 +23,10 @@ public class Transaction {
     private final String correlationId;
     private BigDecimal brl;
     private BigDecimal fxRate;
+    private Boolean record;
+    private TransferType transferType;
+    private BuyType buyType;
 
-
-    private Transaction(
-            UUID id,
-            UUID userId,
-            TransactionType type,
-            Money amount,
-            AccountRef sourceAccount,
-            UUID targetAccount,
-            String description,
-            String category,
-            Instant createdAt,
-            String correlationId
-    ) {
-        this.id = id;
-        this.userId = userId;
-        this.type = type;
-        this.amount = amount;
-        this.sourceAccount = sourceAccount;
-        this.targetAccount = targetAccount;
-        this.status = TransactionStatus.PENDENTE;
-        this.description = description;
-        this.category = category;
-        this.createdAt = createdAt;
-        this.correlationId = correlationId;
-
-        validateRules();
-    }
 
     public Transaction(
             UUID id,
@@ -58,27 +34,38 @@ public class Transaction {
             TransactionType type,
             Money amount,
             AccountRef sourceAccount,
-            UUID targetAccount,
+            UUID targetAccountId,
             TransactionStatus status,
             String description,
             String category,
             String rejectionReason,
             Instant createdAt,
-            Instant processAt,
-            String correlationId) {
+            Instant processedAt,
+            String correlationId,
+            BigDecimal brl,
+            BigDecimal fxRate,
+            Boolean record,
+            TransferType transferType,
+            BuyType buyType
+    ) {
         this.id = id;
         this.userId = userId;
         this.type = type;
         this.amount = amount;
         this.sourceAccount = sourceAccount;
-        this.targetAccount = targetAccount;
+        this.targetAccount = targetAccountId;
         this.status = status;
         this.description = description;
         this.category = category;
         this.rejectionReason = rejectionReason;
         this.createdAt = createdAt;
-        this.processAt = processAt;
+        this.processAt = processedAt;
         this.correlationId = correlationId;
+        this.brl = brl;
+        this.fxRate = fxRate;
+        this.record = record;
+        this.transferType = transferType;
+        this.buyType = buyType;
     }
 
     public static Transaction createPending(
@@ -86,9 +73,12 @@ public class Transaction {
             TransactionType type,
             Money amount,
             AccountRef sourceAccount,
-            UUID targetAccount,
+            UUID targetAccountId,
             String description,
-            String category
+            String category,
+            Boolean record,
+            TransferType transferType,
+            BuyType buyType
     ){
         return new Transaction(
                 UUID.randomUUID(),
@@ -96,11 +86,19 @@ public class Transaction {
                 type,
                 amount,
                 sourceAccount,
-                targetAccount,
+                targetAccountId,
+                TransactionStatus.PENDENTE,
                 description,
                 category,
+                null,
                 Instant.now(),
-                UUID.randomUUID().toString()
+                null,
+                UUID.randomUUID().toString(),
+                null,
+                null,
+                record,
+                transferType,
+                buyType
         );
     }
 
@@ -120,9 +118,6 @@ public class Transaction {
         if (type == null) throw new IllegalArgumentException("Transaction Type é obrigatório!");
         if (sourceAccount == null) throw new IllegalArgumentException("Source account é obrigatório!");
 
-        if (type.requiresTargetAccount() && targetAccount == null){
-            throw new IllegalArgumentException(type + " conta destino é obrigatória!");
-        }
     }
 
     public UUID getId() {
@@ -175,6 +170,18 @@ public class Transaction {
 
     public String getCorrelationId() {
         return correlationId;
+    }
+
+    public Boolean getRecord() {
+        return record;
+    }
+
+    public TransferType getTransferType() {
+        return transferType;
+    }
+
+    public BuyType getBuyType() {
+        return buyType;
     }
 
     public BigDecimal getBrl() {

@@ -54,6 +54,34 @@ public class MockApiAdapter implements BankAccountPort {
     }
 
     @Override
+    public void transfer(String sourceId, String targetId, BigDecimal amount) {
+
+        BankAccount sourceAccount = this.findByUserId(sourceId);
+        BankAccount targetAccount = this.findByUserId(targetId);
+
+        var sourcePayload = Map.of("balance", sourceAccount.balance().subtract(amount));
+        var targetPayload = Map.of("balance", targetAccount.balance().add(amount));
+
+        client.put()
+                .uri(u -> u
+                        .path(endpoint + "/" + sourceAccount.id())
+                        .build()
+                )
+                .body(sourcePayload)
+                .retrieve()
+                .toBodilessEntity();
+
+        client.put()
+                .uri(u -> u
+                        .path(endpoint + "/" + targetAccount.id())
+                        .build()
+                )
+                .body(targetPayload)
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    @Override
     public BankAccount findByUserId(String userId) {
             BankAccount[] accounts = client.get()
                     .uri(uriBuilder -> uriBuilder
