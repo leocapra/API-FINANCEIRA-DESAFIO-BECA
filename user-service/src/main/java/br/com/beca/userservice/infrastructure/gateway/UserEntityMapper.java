@@ -11,6 +11,7 @@ public class UserEntityMapper {
     public UserJpa toEntity(User user){
         return new UserJpa(
                 user.getCpf(),
+                user.getRoles(),
                 user.getNome(),
                 user.getEmail(),
                 user.getSenha(),
@@ -25,6 +26,7 @@ public class UserEntityMapper {
         return new User(
                 userJpa.getId(),
                 userJpa.getCpf(),
+                userJpa.getRoles(),
                 userJpa.getNome(),
                 userJpa.getEmail(),
                 userJpa.getSenha(),

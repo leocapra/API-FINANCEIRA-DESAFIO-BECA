@@ -8,6 +8,7 @@ import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -43,9 +44,9 @@ public class TransactionEntity {
     private String category;
 
     @Column(nullable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
-    private Instant processedAt;
+    private LocalDateTime processedAt;
 
     @Column(nullable = false)
     private String correlationId;
@@ -78,8 +79,8 @@ public class TransactionEntity {
             UUID targetAccountId,
             String description,
             String category,
-            Instant createdAt,
-            Instant processedAt,
+            LocalDateTime createdAt,
+            LocalDateTime processedAt,
             String correlationId,
             String rejectionReason,
             BigDecimal brl,
@@ -149,11 +150,11 @@ public class TransactionEntity {
         return category;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public Instant getProcessedAt() {
+    public LocalDateTime getProcessedAt() {
         return processedAt;
     }
 

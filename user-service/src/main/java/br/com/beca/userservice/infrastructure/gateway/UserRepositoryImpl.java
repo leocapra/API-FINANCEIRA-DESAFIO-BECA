@@ -1,6 +1,5 @@
 package br.com.beca.userservice.infrastructure.gateway;
 
-import br.com.beca.userservice.application.port.BankAccountProvisioningGateway;
 import br.com.beca.userservice.application.port.UserRepository;
 import br.com.beca.userservice.domain.exception.NotFoundException;
 import br.com.beca.userservice.domain.model.User;
@@ -21,33 +20,16 @@ import java.util.UUID;
 public class UserRepositoryImpl implements UserRepository {
     private final UserRepositoryJpa repository;
     private final UserEntityMapper mapper;
-    private final BankAccountProvisioningGateway bankGateway;
 
-    public UserRepositoryImpl(UserRepositoryJpa repository, UserEntityMapper mapper, BankAccountProvisioningGateway bankGateway) {
+    public UserRepositoryImpl(UserRepositoryJpa repository, UserEntityMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
-        this.bankGateway = bankGateway;
-    }
-
-    @Override
-    public boolean existsByCpf(String cpf) {
-        return repository.existsByCpf(cpf);
-    }
-
-    @Override
-    public boolean existsByEmail(String email) {
-        return repository.existsByEmail(email);
     }
 
     @Override
     public User saveUser(User user) {
         UserJpa entity = mapper.toEntity(user);
-        entity.setCreatedAt(LocalDate.now());
-        entity.setUpdatedAt(LocalDate.now());
-
         UserJpa saved = repository.save(entity);
-        bankGateway.createAccountForUser(saved.getId().toString(), saved.getEmail());
-
         return mapper.toDomain(saved);
     }
 
@@ -60,10 +42,16 @@ public class UserRepositoryImpl implements UserRepository {
                 user.getEmail(),
                 user.getTelefone()
         );
+
         existing.setUpdatedAt(LocalDate.now());
+
         UserJpa saved = repository.save(existing);
+
+        repository.flush();
+
         return mapper.toDomain(saved);
     }
+
 
     @Override
     public PaginatedResponse<User> findAllActive(PageDataDomain pageData) {
@@ -89,9 +77,8 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     public Optional<User> findByIdAndActiveTrue(UUID id) {
-        Optional<UserJpa> userJpa = repository.findByIdAndActiveTrue(id);
-        Optional<User> user = userJpa.map(mapper::toDomain);
-        return user;
+        return repository.findByIdAndActiveTrue(id).map(mapper::toDomain);
+
     }
 
     @Override
@@ -99,7 +86,6 @@ public class UserRepositoryImpl implements UserRepository {
         Optional<UserJpa> find = repository.findByIdAndActiveTrue(id);
         find.get().setUpdatedAt(LocalDate.now());
         find.get().deactivate();
-
     }
 
 }

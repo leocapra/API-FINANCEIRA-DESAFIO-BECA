@@ -1,14 +1,19 @@
 package br.com.beca.userservice.application.usecase;
 
+import br.com.beca.userservice.application.port.BankAccountPort;
 import br.com.beca.userservice.application.port.UserRepository;
+import br.com.beca.userservice.domain.dto.TokenInfoData;
 import br.com.beca.userservice.domain.dto.UpdateUserData;
 import br.com.beca.userservice.domain.exception.NotFoundException;
+import br.com.beca.userservice.domain.exception.PermissionException;
 import br.com.beca.userservice.domain.exception.RegexpException;
+import br.com.beca.userservice.domain.model.Roles;
 import br.com.beca.userservice.domain.model.User;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -16,6 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -24,141 +30,84 @@ class UpdateUserUseCaseTest {
     @Mock
     private UserRepository userRepository;
 
-    private UpdateUserUseCase useCase;
+    @Mock
+    private BankAccountPort bankAccountPort;
+
+    @InjectMocks
+    private UpdateUserUseCase updateUserUseCase;
+
+    private UUID userId;
+    private User userMock;
 
     @BeforeEach
     void setUp() {
-        useCase = new UpdateUserUseCase(userRepository);
-    }
-
-    private User existingUser(UUID id) {
-        return new User(
-                id,
-                "123.456.789-09",
-                "Nome Antigo",
-                "old@email.com",
-                "senhaHash",
-                "+55 11 91234-5678"
+        userId = UUID.randomUUID();
+        // Simulando o usuário que já existe no banco
+        userMock = new User(
+                userId, "123.456.789-00", Roles.ROLE_USER,
+                "João Silva", "joao@email.com", "senha123",
+                "+55 11 98888-8888", true, null, null
         );
     }
 
-    // -------------------------
-    // Not found
-    // -------------------------
-
     @Test
-    void shouldThrowNotFoundException_whenUserDoesNotExist() {
-        UUID id = UUID.fromString("11111111-1111-1111-1111-11111111111");
-        UpdateUserData dto = new UpdateUserData("Novo Nome", "novo@email.com", "+55 11 91234-5678");
+    @DisplayName("Deve atualizar e-mail no banco e no usuário quando os dados forem válidos")
+    void execute_ShouldUpdateUserAndNotifyBankAccount_WhenDataIsValid() throws RegexpException {
+        // GIVEN
+        var dto = new UpdateUserData("João Alterado", "novo@email.com", "+55 11 91234-5678");
+        var token = new TokenInfoData(userId.toString(), "ROLE_USER");
 
-        when(userRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.empty());
+        when(userRepository.findByIdAndActiveTrue(userId)).thenReturn(Optional.of(userMock));
+        when(userRepository.updateUser(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        NotFoundException ex = assertThrows(NotFoundException.class, () -> useCase.execute(id, dto));
-        assertEquals("Usuário não encontrado", ex.getMessage());
+        // WHEN
+        User result = updateUserUseCase.execute(userId, dto, token);
 
-        verify(userRepository).findByIdAndActiveTrue(id);
-        verify(userRepository, never()).updateUser(any());
-    }
-
-    // -------------------------
-    // Email inválido
-    // -------------------------
-
-    @Test
-    void shouldThrowRegexpException_whenEmailInvalid() {
-        UUID id = UUID.fromString("11111111-1111-1111-1111-11111111111");
-        UpdateUserData dto = new UpdateUserData("Novo Nome", "email-invalido", "+55 11 91234-5678");
-
-        when(userRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(existingUser(id)));
-
-        RegexpException ex = assertThrows(RegexpException.class, () -> useCase.execute(id, dto));
-        assertEquals("Email não tem um formato válido!", ex.getMessage());
-
-        verify(userRepository).findByIdAndActiveTrue(id);
-        verify(userRepository, never()).updateUser(any());
-    }
-
-    // -------------------------
-    // Telefone inválido
-    // -------------------------
-
-    @Test
-    void shouldThrowRegexpException_whenTelefoneInvalid() {
-        UUID id = UUID.fromString("11111111-1111-1111-1111-11111111111");
-        UpdateUserData dto = new UpdateUserData("Novo Nome", "novo@email.com", "11 91234-5678");
-
-        when(userRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(existingUser(id)));
-
-        RegexpException ex = assertThrows(RegexpException.class, () -> useCase.execute(id, dto));
-        assertEquals("Telefone não tem um formato válido!", ex.getMessage());
-
-        verify(userRepository).findByIdAndActiveTrue(id);
-        verify(userRepository, never()).updateUser(any());
-    }
-
-    // -------------------------
-    // Caminho feliz
-    // -------------------------
-
-    @Test
-    void shouldUpdateUser_whenDtoValid() throws RegexpException {
-        UUID id = UUID.fromString("11111111-1111-1111-1111-11111111111");
-        User existing = existingUser(id);
-
-        UpdateUserData dto = new UpdateUserData(
-                "Novo Nome",
-                "novo@email.com",
-                "+55 11 91234-5678"
-        );
-
-        when(userRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(existing));
-
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        when(userRepository.updateUser(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
-
-        User updated = useCase.execute(id, dto);
-
-        // o use case cria um "novo User" baseado no existente e aplica updateProfile
-        User sentToRepo = captor.getValue();
-
-        assertNotNull(updated);
-        assertEquals(id, sentToRepo.getId());
-        assertEquals("123.456.789-09", sentToRepo.getCpf());
-        assertEquals("Novo Nome", sentToRepo.getNome());
-        assertEquals("novo@email.com", sentToRepo.getEmail());
-        assertEquals("+55 11 91234-5678", sentToRepo.getTelefone());
-
-        verify(userRepository).findByIdAndActiveTrue(id);
+        // THEN
+        assertEquals("João Alterado", result.getNome());
+        assertEquals("novo@email.com", result.getEmail());
+        verify(bankAccountPort).updateAccountEmail(userId.toString(), "novo@email.com");
         verify(userRepository).updateUser(any(User.class));
     }
 
-    // -------------------------
-    // Campos null/blank não devem validar nem alterar
-    // -------------------------
+    @Test
+    @DisplayName("Deve lançar exceção de permissão quando um ROLE_USER tenta editar outro usuário")
+    void execute_ShouldThrowPermissionException_WhenUserEditsAnotherUser() {
+        // GIVEN
+        var dto = new UpdateUserData("Nome", "email@test.com", null);
+        var token = new TokenInfoData(UUID.randomUUID().toString(), "ROLE_USER"); // ID diferente do solicitado
+
+        when(userRepository.findByIdAndActiveTrue(userId)).thenReturn(Optional.of(userMock));
+
+        // WHEN & THEN
+        assertThrows(PermissionException.class, () -> updateUserUseCase.execute(userId, dto, token));
+    }
 
     @Test
-    void shouldNotValidateOrChange_whenDtoFieldsAreBlankOrNull() throws RegexpException {
-        UUID id = UUID.fromString("11111111-1111-1111-1111-11111111111");
-        User existing = existingUser(id);
+    @DisplayName("Deve lançar exceção de Regex quando o telefone for inválido")
+    void execute_ShouldThrowRegexpException_WhenPhoneIsInvalid() {
+        // GIVEN
+        var dto = new UpdateUserData("Nome", "email@correto.com", "1199999999"); // Formato fora do padrão
+        var token = new TokenInfoData(userId.toString(), "ROLE_USER");
 
-        // todos em branco -> updateProfile não altera
-        UpdateUserData dto = new UpdateUserData(" ", " ", null);
+        when(userRepository.findByIdAndActiveTrue(userId)).thenReturn(Optional.of(userMock));
 
-        when(userRepository.findByIdAndActiveTrue(id)).thenReturn(Optional.of(existing));
+        // WHEN & THEN
+        RegexpException ex = assertThrows(RegexpException.class, () -> updateUserUseCase.execute(userId, dto, token));
+        assertTrue(ex.getMessage().contains("Telefone"));
+    }
 
-        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
-        when(userRepository.updateUser(captor.capture())).thenAnswer(inv -> inv.getArgument(0));
+    @Test
+    @DisplayName("Deve lançar exceção quando ROLE_ADMIN tenta editar a si mesmo")
+    void execute_ShouldThrowPermissionException_WhenAdminEditsThemselves() {
+        // GIVEN
+        var dto = new UpdateUserData("Admin", "admin@email.com", null);
+        var token = new TokenInfoData(userId.toString(), "ROLE_ADMIN");
 
-        useCase.execute(id, dto);
+        when(userRepository.findByIdAndActiveTrue(userId)).thenReturn(Optional.of(userMock));
 
-        User sentToRepo = captor.getValue();
-
-        // deve permanecer como o original
-        assertEquals("Nome Antigo", sentToRepo.getNome());
-        assertEquals("old@email.com", sentToRepo.getEmail());
-        assertEquals("+55 11 91234-5678", sentToRepo.getTelefone());
-
-        verify(userRepository).findByIdAndActiveTrue(id);
-        verify(userRepository).updateUser(any(User.class));
+        // WHEN & THEN
+        PermissionException ex = assertThrows(PermissionException.class, () -> updateUserUseCase.execute(userId, dto, token));
+        assertEquals("Administrador não pode ser editado!", ex.getMessage());
     }
 }

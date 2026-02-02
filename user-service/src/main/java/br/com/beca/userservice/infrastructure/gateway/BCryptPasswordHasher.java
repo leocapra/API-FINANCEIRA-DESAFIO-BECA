@@ -15,11 +15,6 @@ public class BCryptPasswordHasher implements PasswordHasher {
     }
 
     @Override
-    public boolean matches(String raw, String hashed) {
-        return encoder.matches(raw, hashed);
-    }
-
-    @Override
     public boolean isHashed(String value) {
         return value != null && value.matches("^\\$2[aby]\\$\\d{2}\\$.*");
     }

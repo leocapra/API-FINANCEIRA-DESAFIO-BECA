@@ -1,5 +1,6 @@
 package br.com.beca.userservice.infrastructure.security;
 
+import br.com.beca.userservice.domain.exception.NotFoundException;
 import br.com.beca.userservice.infrastructure.persistence.repository.UserRepositoryJpa;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,26 +24,40 @@ public class SecurityFilter extends OncePerRequestFilter {
     private UserRepositoryJpa repository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        var tokenJWT = recuperarToken(request);
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+            throws ServletException, IOException {
 
-        if (tokenJWT != null){
+        var tokenJWT = recoverToken(request);
+
+        if (tokenJWT != null) {
             var subject = tokenService.getSubjet(tokenJWT);
-            var usuario = repository.findByEmail(subject);
+            var usuario = repository.findByEmail(subject)
+                    .orElseThrow(() -> new NotFoundException("Usuário não encontrado!"));
 
-            var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.get().getAuthorities());
-
+            var authentication = new UsernamePasswordAuthenticationToken(usuario, null, usuario.getAuthorities());
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private String recuperarToken(HttpServletRequest request) {
+
+    public String recoverToken(HttpServletRequest request) {
         var authorizationHeader = request.getHeader("Authorization");
         if (authorizationHeader != null){
             return authorizationHeader.replace("Bearer", "").trim();
         }
         return null;
     }
+
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.equals("/login")
+                || path.equals("/usuarios/criar")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-ui");
+    }
+
 }
+
+

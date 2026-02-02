@@ -17,7 +17,7 @@ public class TransactionRequestedListener {
 
     @KafkaListener(topics = "${app.kafka.topics.requested}")
     @Transactional
-    public void onMessage(TransactionRequestedEvent event){
+    public void onMessage(TransactionRequestedEvent event) throws Exception {
         useCase.execute(event);
     }
 }

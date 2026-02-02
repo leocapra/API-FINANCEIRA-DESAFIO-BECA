@@ -9,7 +9,7 @@ public record ControllerUseCase(
         ProcessBuyUseCase processBuyUseCase
 ) {
 
-    public void execute(TransactionRequestedEvent event) {
+    public void execute(TransactionRequestedEvent event) throws Exception {
 
         switch (event.type()) {
             case DEPOSITO -> processDepositUseCase.execute(event);

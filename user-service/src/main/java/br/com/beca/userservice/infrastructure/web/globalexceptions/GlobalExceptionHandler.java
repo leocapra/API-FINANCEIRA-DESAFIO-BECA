@@ -1,11 +1,9 @@
-package br.com.beca.userservice.infrastructure.web.exception;
+package br.com.beca.userservice.infrastructure.web.globalexceptions;
 
-import br.com.beca.userservice.domain.exception.AlreadyExistsException;
-import br.com.beca.userservice.domain.exception.FieldIsEmptyException;
-import br.com.beca.userservice.domain.exception.NotFoundException;
-import br.com.beca.userservice.domain.exception.RegexpException;
+import br.com.beca.userservice.domain.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -40,4 +38,31 @@ public class GlobalExceptionHandler {
                 .body(ex.getMessage());
     }
 
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public ResponseEntity<String> handleUsernameNotFoundException(UsernameNotFoundException ex){
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(JWTException.class)
+    public ResponseEntity<String> JWTException(JWTException ex){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<String> IllegalStateException(IllegalStateException ex){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(PermissionException.class)
+    public ResponseEntity<String> PermissionException(PermissionException ex){
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
 }

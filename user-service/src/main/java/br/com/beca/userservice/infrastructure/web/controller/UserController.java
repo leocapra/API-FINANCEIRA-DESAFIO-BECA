@@ -8,18 +8,21 @@ import br.com.beca.userservice.domain.model.User;
 import br.com.beca.userservice.domain.pagination.PaginatedResponse;
 import br.com.beca.userservice.infrastructure.gateway.ExcelUserImportMapper;
 import br.com.beca.userservice.infrastructure.gateway.PageMapper;
+import br.com.beca.userservice.infrastructure.security.SecurityFilter;
+import br.com.beca.userservice.infrastructure.web.service.ExtractInfoFromToken;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -34,6 +37,9 @@ public class UserController {
     private final DeleteUserUseCase deleteUserUseCase;
     private final ImportUserFromExcelUseCase importUserFromExcelUseCase;
     private final ExcelUserImportMapper excelUserImportMapper;
+    private final User user;
+    private final SecurityFilter securityFilter;
+    private final ExtractInfoFromToken extractInfoFromToken;
 
     public UserController(
             CreateUserUseCase createUserUseCase,
@@ -41,7 +47,10 @@ public class UserController {
             DetailsUserUseCase detailsUserUseCase,
             UpdateUserUseCase updateUserUseCase,
             DeleteUserUseCase deleteUserUseCase,
-            ImportUserFromExcelUseCase importUserFromExcelUseCase, ExcelUserImportMapper excelUserImportMapper
+            ImportUserFromExcelUseCase importUserFromExcelUseCase,
+            ExcelUserImportMapper excelUserImportMapper,
+            User user,
+            SecurityFilter securityFilter, ExtractInfoFromToken extractInfoFromToken
     ) {
         this.createUserUseCase = createUserUseCase;
         this.listUsersUseCase = listUsersUseCase;
@@ -50,32 +59,21 @@ public class UserController {
         this.deleteUserUseCase = deleteUserUseCase;
         this.importUserFromExcelUseCase = importUserFromExcelUseCase;
         this.excelUserImportMapper = excelUserImportMapper;
+        this.user = user;
+        this.securityFilter = securityFilter;
+        this.extractInfoFromToken = extractInfoFromToken;
     }
 
-    @PostMapping
+    @PostMapping("/criar")
     @Transactional
     public ResponseEntity create(@RequestBody @Valid RequestUserData dto, UriComponentsBuilder uriBuilder) throws FieldIsEmptyException, RegexpException {
-        User created = createUserUseCase.execute(new User(
-                        dto.cpf(),
-                        dto.nome(),
-                        dto.email(),
-                        dto.senha(),
-                        dto.telefone()
-                )
-        );
+        User created = createUserUseCase.execute(dto);
         var uri = uriBuilder.path("/usuarios/{id}").buildAndExpand(created.getId()).toUri();
-        var details = detailsUserUseCase.execute(created.getId());
-        Optional<ResponseUserData> detailsConverted = details.map(d -> new ResponseUserData(
-                d.getId(),
-                d.getCpf(),
-                d.getNome(),
-                d.getEmail(),
-                d.getTelefone()
-        ));
-        return ResponseEntity.created(uri).body(detailsConverted);
+        return ResponseEntity.created(uri).body(new ResponseUserData(created.getId(), created.getCpf(), created.getNome(), created.getEmail(), created.getTelefone()));
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public ResponseEntity<PaginatedResponse<ResponseUserData>> listUsers(Pageable pageable) {
         var pageableDomain = new PageMapper().pageableToPageDataDomain(pageable);
@@ -90,39 +88,42 @@ public class UserController {
 
     @GetMapping("/{id}")
     @Transactional
-    public ResponseEntity detailUser(@PathVariable UUID id) {
-        var details = detailsUserUseCase.execute(id);
-        return ResponseEntity.ok(details.map(u -> new ResponseUserData(
-                u.getId(),
-                u.getCpf(),
-                u.getNome(),
-                u.getEmail(),
-                u.getTelefone()
-        )));
+    public ResponseEntity detailUser(@PathVariable UUID id, HttpServletRequest request) {
+        TokenInfoData tokenData = extractInfoFromToken.tokenInfo(request);
+        var details = detailsUserUseCase.execute(id, tokenData);
+        return ResponseEntity.ok(new ResponseUserData(
+                details.getId(),
+                details.getCpf(),
+                details.getNome(),
+                details.getEmail(),
+                details.getTelefone()
+        ));
     }
 
     @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity updateUser(@PathVariable UUID id, @RequestBody UpdateUserData dto) throws RegexpException {
-        updateUserUseCase.execute(id, dto);
-        var details = detailsUserUseCase.execute(id);
-        return ResponseEntity.ok(details.map(u -> new ResponseUserData(
-                u.getId(),
-                u.getCpf(),
-                u.getNome(),
-                u.getEmail(),
-                u.getTelefone()
-        )));
+    public ResponseEntity updateUser(@PathVariable UUID id, @RequestBody UpdateUserData dto, HttpServletRequest request) throws RegexpException {
+        TokenInfoData tokenData = extractInfoFromToken.tokenInfo(request);
+        User user = updateUserUseCase.execute(id, dto, tokenData);
+        return ResponseEntity.ok(new ResponseUserData(
+                user.getId(),
+                user.getCpf(),
+                user.getNome(),
+                user.getEmail(),
+                user.getTelefone()
+        ));
     }
 
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity deleteUser(@PathVariable UUID id) {
-        deleteUserUseCase.execute(id);
+    public ResponseEntity deleteUser(@PathVariable UUID id, HttpServletRequest request) {
+        TokenInfoData tokenData = extractInfoFromToken.tokenInfo(request);
+        deleteUserUseCase.execute(id, tokenData);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/importar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ImportResponseData> importUsers(@RequestPart("file") MultipartFile file) {
 
         List<ImportUserRequestData> parsed =

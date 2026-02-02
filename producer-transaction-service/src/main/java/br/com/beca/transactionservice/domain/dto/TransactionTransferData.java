@@ -7,10 +7,9 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record TransactionTransferData(
-        UUID userId,
         BigDecimal amount,
         String currency,
-        String targetAccountId,
+        UUID targetAccountId,
         TransferType transferType,
         Boolean record
 ) {

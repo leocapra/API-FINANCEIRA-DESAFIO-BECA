@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 public record TransactionBuyData(
-        UUID userId,
         BigDecimal amount,
         String currency,
         String description,

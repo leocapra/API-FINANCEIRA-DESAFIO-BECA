@@ -1,9 +1,11 @@
 package br.com.beca.userservice.infrastructure.config;
 
-import br.com.beca.userservice.application.port.BankAccountProvisioningGateway;
+import br.com.beca.userservice.application.port.BankAccountPort;
 import br.com.beca.userservice.application.port.UserRepository;
 import br.com.beca.userservice.application.usecase.*;
 import br.com.beca.userservice.application.port.PasswordHasher;
+import br.com.beca.userservice.domain.dto.TokenInfoData;
+import br.com.beca.userservice.domain.model.User;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -11,8 +13,13 @@ import org.springframework.context.annotation.Configuration;
 public class UseCaseConfig {
 
     @Bean
-    public CreateUserUseCase createUserUseCase(UserRepository userRepository, PasswordHasher passwordHasher) {
-        return new CreateUserUseCase(userRepository, passwordHasher);
+    public User user(){
+        return new User();
+    }
+
+    @Bean
+    public CreateUserUseCase createUserUseCase(UserRepository userRepository, PasswordHasher passwordHasher, User user, BankAccountPort bankAccount) {
+        return new CreateUserUseCase(userRepository, passwordHasher, user, bankAccount);
     }
 
     @Bean
@@ -26,17 +33,17 @@ public class UseCaseConfig {
     }
 
     @Bean
-    public UpdateUserUseCase updateUserUseCase(UserRepository userRepository) {
-        return new UpdateUserUseCase(userRepository);
+    public UpdateUserUseCase updateUserUseCase(UserRepository userRepository, BankAccountPort bankAccount) {
+        return new UpdateUserUseCase(userRepository, bankAccount);
     }
 
     @Bean
-    public DeleteUserUseCase deleteUserUseCase(UserRepository userRepository) {
-        return new DeleteUserUseCase(userRepository);
+    public DeleteUserUseCase deleteUserUseCase(UserRepository userRepository, BankAccountPort bankAccountPort) {
+        return new DeleteUserUseCase(userRepository, bankAccountPort);
     }
 
     @Bean
-    public ImportUserFromExcelUseCase importUserFromExcelUseCase(CreateUserUseCase createUserUseCase) {
+    public ImportUserFromExcelUseCase importUserFromExcelUseCase(CreateUserUseCase createUserUseCase ) {
         return new ImportUserFromExcelUseCase(createUserUseCase);
     }
 }

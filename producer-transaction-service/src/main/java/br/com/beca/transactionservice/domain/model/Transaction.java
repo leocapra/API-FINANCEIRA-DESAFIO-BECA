@@ -5,6 +5,7 @@ import br.com.beca.transactionservice.domain.valueobject.Money;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public class Transaction {
@@ -18,8 +19,8 @@ public class Transaction {
     private String description;
     private String category;
     private String rejectionReason;
-    private final Instant createdAt;
-    private Instant processAt;
+    private final LocalDateTime createdAt;
+    private LocalDateTime processAt;
     private final String correlationId;
     private BigDecimal brl;
     private BigDecimal fxRate;
@@ -39,8 +40,8 @@ public class Transaction {
             String description,
             String category,
             String rejectionReason,
-            Instant createdAt,
-            Instant processedAt,
+            LocalDateTime createdAt,
+            LocalDateTime processedAt,
             String correlationId,
             BigDecimal brl,
             BigDecimal fxRate,
@@ -91,7 +92,7 @@ public class Transaction {
                 description,
                 category,
                 null,
-                Instant.now(),
+                LocalDateTime.now(),
                 null,
                 UUID.randomUUID().toString(),
                 null,
@@ -102,22 +103,22 @@ public class Transaction {
         );
     }
 
-    public void approve() {
-        this.status = TransactionStatus.APROVADA;
-        this.processAt = Instant.now();
+    public void cancel() {
+        this.status = TransactionStatus.CANCELADA;
+        this.processAt = LocalDateTime.now();
     }
+
 
     public void reject(String reason) {
         this.status = TransactionStatus.REJEITADA;
         this.rejectionReason = reason;
-        this.processAt = Instant.now();
+        this.processAt = LocalDateTime.now();
     }
 
     private void validateRules(){
         if (userId == null) throw new IllegalArgumentException("UserId é obrigatório!");
         if (type == null) throw new IllegalArgumentException("Transaction Type é obrigatório!");
         if (sourceAccount == null) throw new IllegalArgumentException("Source account é obrigatório!");
-
     }
 
     public UUID getId() {
@@ -160,11 +161,11 @@ public class Transaction {
         return rejectionReason;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public Instant getProcessAt() {
+    public LocalDateTime getProcessAt() {
         return processAt;
     }
 
@@ -191,4 +192,5 @@ public class Transaction {
     public BigDecimal getFxRate() {
         return fxRate;
     }
+
 }

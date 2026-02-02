@@ -1,130 +1,126 @@
-package br.com.beca.userservice.domain.model;
+    package br.com.beca.userservice.domain.model;
 
-import br.com.beca.userservice.application.port.PasswordHasher;
+    import br.com.beca.userservice.application.port.PasswordHasher;
 
-import java.time.LocalDate;
-import java.util.UUID;
+    import java.time.LocalDate;
+    import java.util.UUID;
 
-public class User {
-    private UUID id;
-    private String cpf;
-    private String nome;
-    private String email;
-    private String senha;
-    private String telefone;
-    private boolean active;
-    private LocalDate createdAt;
-    private LocalDate updatedAt;
+    public class User {
+        private UUID id;
+        private String cpf;
+        private Roles roles;
+        private String nome;
+        private String email;
+        private String senha;
+        private String telefone;
+        private boolean active;
+        private LocalDate createdAt;
+        private LocalDate updatedAt;
 
-    public User() {};
+        public User() {};
 
-    public User(UUID id, String cpf, String nome, String email, String senha, String telefone, boolean active, LocalDate createdAt, LocalDate updatedAt) {
-        this.id = id;
-        this.cpf = cpf;
-        this.nome = nome;
-        this.email = email;
-        this.senha = senha;
-        this.telefone = telefone;
-        this.active = active;
-        this.createdAt = updatedAt;
-        this.updatedAt = createdAt;
-
-    }
-
-    public User(String cpf, String nome, String email, String senha, String telefone) {
-        this.cpf = cpf;
-        this.nome = nome;
-        this.email = email;
-        this.senha = senha;
-        this.telefone = telefone;
-        this.active = true;
-    }
-
-    public User(UUID id, String cpf, String nome, String email, String senha, String telefone) {
-        this.id = id;
-        this.cpf = cpf;
-        this.nome = nome;
-        this.email = email;
-        this.senha = senha;
-        this.telefone = telefone;
-        this.active = true;
-    }
-
-    public void deactivate() {
-        if (!this.active) throw new IllegalStateException("Usuário já esta inativo!");
-        this.active = false;
-        this.updatedAt = LocalDate.now();
-    }
-
-    public void activate(){
-        if (this.active) throw new IllegalStateException("Usuario já está ativo!");
-        this.active = true;
-        this.updatedAt = LocalDate.now();
-        }
-
-
-    public void updateProfile(String nome, String email, String telefone) {
-        if (nome != null && !nome.isBlank()) {
+        public User(UUID id, String cpf, Roles roles, String nome, String email, String senha, String telefone, boolean active, LocalDate createdAt, LocalDate updatedAt) {
+            this.id = id;
+            this.cpf = cpf;
+            this.roles = roles;
             this.nome = nome;
-        }
-        if (email != null && !email.isBlank()){
             this.email = email;
-        }
-        if (telefone != null && !telefone.isBlank()){
+            this.senha = senha;
             this.telefone = telefone;
+            this.active = active;
+            this.createdAt = createdAt;
+            this.updatedAt = updatedAt;
         }
 
-        this.updatedAt = LocalDate.now();
-    }
 
-    public void ensurePasswordHashed(PasswordHasher hasher) {
-        if (!hasher.isHashed(this.senha)) {
-            this.senha = hasher.hash(this.senha);
+        public User importUser(String cpf, String nome, String email, String senha, String telefone) {
+            return new User(null, cpf, null, nome, email, senha, telefone, true, LocalDate.now(), LocalDate.now());
         }
-    }
+
+        public User createUser(String cpf, String nome, String email, String senha, String telefone) {
+            return new User(null, cpf, Roles.ROLE_USER, nome, email, senha, telefone, true, LocalDate.now(), LocalDate.now());
+        }
+
+        public void deactivate() {
+            if (!this.active) throw new IllegalStateException("Usuário já esta inativo!");
+            this.active = false;
+            this.updatedAt = LocalDate.now();
+        }
+
+        public void activate(){
+            if (this.active) throw new IllegalStateException("Usuario já está ativo!");
+            this.active = true;
+            this.updatedAt = LocalDate.now();
+            }
 
 
-    public UUID getId() {
-        return id;
-    }
+        public void updateProfile(String nome, String email, String telefone) {
+            if (nome != null && !nome.isBlank()) {
+                this.nome = nome;
+            }
+            if (email != null && !email.isBlank()){
+                this.email = email;
+            }
+            if (telefone != null && !telefone.isBlank()){
+                this.telefone = telefone;
+            }
 
-    public String getCpf() {
-        return cpf;
-    }
+            this.updatedAt = LocalDate.now();
+        }
 
-    public String getNome() {
-        return nome;
-    }
+        public void ensurePasswordHashed(PasswordHasher hasher) {
+            if (!hasher.isHashed(this.senha)) {
+                this.senha = hasher.hash(this.senha);
+            }
+        }
 
-    public String getEmail() {
-        return email;
-    }
 
-    public String getSenha() {
-        return senha;
-    }
+        public UUID getId() {
+            return id;
+        }
 
-    public String getTelefone() {
-        return telefone;
-    }
+        public String getCpf() {
+            return cpf;
+        }
 
-    public boolean isActive() {
-        return active;
-    }
+        public String getNome() {
+            return nome;
+        }
 
-    public LocalDate getCreatedAt() {
-        return createdAt;
-    }
+        public String getEmail() {
+            return email;
+        }
 
-    public LocalDate getUpdatedAt() {
-        return updatedAt;
-    }
+        public String getSenha() {
+            return senha;
+        }
 
-    public void setCreatedAt(LocalDate createdAt) {
-        this.createdAt = createdAt;
-    }
+        public String getTelefone() {
+            return telefone;
+        }
 
-    public void setUpdatedAt(LocalDate updatedAt) {
-        this.updatedAt = updatedAt;
+        public boolean isActive() {
+            return active;
+        }
+
+        public LocalDate getCreatedAt() {
+            return createdAt;
+        }
+
+        public LocalDate getUpdatedAt() {
+            return updatedAt;
+        }
+
+        public void setCreatedAt(LocalDate createdAt) {
+            this.createdAt = createdAt;
+        }
+
+        public void setUpdatedAt(LocalDate updatedAt) {
+            this.updatedAt = updatedAt;
+        }
+
+        public Roles getRoles() {
+            return roles;
+        }
+
     }
-}

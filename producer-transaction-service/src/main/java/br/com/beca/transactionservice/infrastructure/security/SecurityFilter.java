@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -27,11 +26,10 @@ public class SecurityFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        var token = recuperarToken(request);
+        var token = recoverToken(request);
 
         if (token != null) {
             var subject = tokenService.getSubject(token);
-
             var auth = new UsernamePasswordAuthenticationToken(
                     subject,
                     null,
@@ -44,11 +42,12 @@ public class SecurityFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private String recuperarToken(HttpServletRequest request) {
-        var header = request.getHeader("Authorization");
-        if (header != null && header.startsWith("Bearer ")) {
-            return header.replace("Bearer ", "").trim();
+    public String recoverToken(HttpServletRequest request) {
+        var authorizationHeader = request.getHeader("Authorization");
+        if (authorizationHeader != null){
+            return authorizationHeader.replace("Bearer", "").trim();
         }
         return null;
     }
+
 }

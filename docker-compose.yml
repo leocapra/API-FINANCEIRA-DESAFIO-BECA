@@ -1,5 +1,6 @@
 services:
-  postgres:
+  # --- INFRAESTRUTURA ---
+  db-usuarios:
     image: postgres:17
     container_name: usuarios
     environment:
@@ -11,8 +12,13 @@ services:
     volumes:
       - postgres_data_usuarios:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U api-financeira -d usuarios_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  postgres2:
+  db-transacoes:
     image: postgres:17
     container_name: transacoes
     environment:
@@ -24,6 +30,11 @@ services:
     volumes:
       - postgres_data_transacoes:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U api-financeira -d transacoes_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -57,7 +68,6 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
     depends_on:
       - zookeeper
 
@@ -73,6 +83,43 @@ services:
     depends_on:
       - kafka
 
+  # --- MICROSSERVIÇOS (ORDEM DE INICIALIZAÇÃO) ---
+
+  user-service:
+    build: ./user-service
+    container_name: ms1-user-service
+    ports:
+      - "${MS1_APP_PORT}:${MS1_APP_PORT}"
+    env_file: .env
+    depends_on:
+      db-usuarios:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  producer-transaction-service:
+    build: ./producer-transaction-service
+    container_name: ms2-producer-service
+    ports:
+      - "${MS2_APP_PORT}:${MS2_APP_PORT}"
+    env_file: .env
+    depends_on:
+      user-service:
+        condition: service_started
+      db-transacoes:
+        condition: service_healthy
+
+  consumer-transaction-service:
+    build: ./consumer-transaction-service
+    container_name: ms3-consumer-service
+    ports:
+      - "${MS3_APP_PORT}:${MS3_APP_PORT}"
+    env_file: .env
+    depends_on:
+      producer-transaction-service:
+        condition: service_started
+      db-transacoes:
+        condition: service_healthy
 
 volumes:
   postgres_data_usuarios:

@@ -3,44 +3,58 @@ package br.com.beca.userservice.application.usecase;
 import br.com.beca.userservice.domain.dto.ImportErrorDetails;
 import br.com.beca.userservice.domain.dto.ImportResponseData;
 import br.com.beca.userservice.domain.dto.ImportUserRequestData;
+import br.com.beca.userservice.domain.dto.RequestUserData;
 import br.com.beca.userservice.domain.exception.AlreadyExistsException;
 import br.com.beca.userservice.domain.exception.FieldIsEmptyException;
 import br.com.beca.userservice.domain.exception.RegexpException;
-import br.com.beca.userservice.domain.model.User;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public record ImportUserFromExcelUseCase(CreateUserUseCase createUserUseCase) {
 
-        public ImportResponseData execute(List<ImportUserRequestData> dtos) {
-            int total = 0, success = 0, failed = 0;
-            List<ImportErrorDetails> errorList = new ArrayList<>();
+    public ImportResponseData execute(List<ImportUserRequestData> dtos) {
+        if (dtos == null || dtos.isEmpty()) {
+            return new ImportResponseData(0, 0, 0, List.of());
+        }
 
-            for (ImportUserRequestData dto : dtos) {
-                total++;
-                try {
-                    User user = new User(
-                            dto.cpf(),
-                            dto.nome(),
-                            dto.email(),
-                            dto.senha(),
-                            dto.telefone()
-                    );
+        int totalRows = 0;
+        int imported = 0;
+        int failed = 0;
+        List<ImportErrorDetails> errors = new ArrayList<>();
 
-                    createUserUseCase.execute(user);
-                    success++;
+        for (ImportUserRequestData dto : dtos) {
+            totalRows++;
 
-                } catch (AlreadyExistsException | FieldIsEmptyException | RegexpException e) {
-                    failed++;
-                    errorList.add(new ImportErrorDetails(dto.cpf(), e.getMessage()));
-                } catch (Exception e) {
-                    failed++;
-                    errorList.add(new ImportErrorDetails(dto.cpf(), "Erro inesperado: " + e.getMessage()));
-                }
+            String identifier = null;
+            if (dto != null && dto.cpf() != null) {
+                identifier = dto.cpf().trim();
             }
 
-            return new ImportResponseData(total, success, failed, errorList);
+            try {
+                RequestUserData newDto = new RequestUserData(
+                        dto.cpf(),
+                        dto.nome(),
+                        dto.email(),
+                        dto.senha(),
+                        dto.telefone()
+                );
+
+                createUserUseCase.execute(newDto);
+                imported++;
+
+            } catch (AlreadyExistsException | FieldIsEmptyException | RegexpException e) {
+                failed++;
+                String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                errors.add(new ImportErrorDetails(identifier, msg));
+
+            } catch (Exception e) {
+                failed++;
+                String base = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                errors.add(new ImportErrorDetails(identifier, "Erro inesperado: " + base));
+            }
         }
+
+        return new ImportResponseData(totalRows, imported, failed, errors);
     }
+}

@@ -4,9 +4,11 @@ import br.com.beca.transactionservice.domain.model.Transaction;
 import br.com.beca.transactionservice.domain.valueobject.AccountRef;
 import br.com.beca.transactionservice.domain.valueobject.Money;
 import br.com.beca.transactionservice.infrastructure.persistence.model.TransactionEntity;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Component
 public final class TransactionMapper {
     private TransactionMapper() {}
 
@@ -35,7 +37,7 @@ public final class TransactionMapper {
         );
     }
 
-    public static Transaction toDomain(TransactionEntity tx){
+    public Transaction toDomain(TransactionEntity tx){
         return new Transaction(
                 tx.getId(),
                 tx.getUserId(),

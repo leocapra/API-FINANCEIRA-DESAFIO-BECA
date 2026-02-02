@@ -27,6 +27,9 @@ public class MockApiAdapter implements BankAccountPort {
     @Override
     public void deposit(String userId, BigDecimal amount) {
         BankAccount clientAccount = this.findByUserId(userId);
+        if (clientAccount.id() == null){
+            return;
+        }
         var payload = Map.of("balance", clientAccount.balance().add(amount));
 
         client.put()
@@ -37,10 +40,11 @@ public class MockApiAdapter implements BankAccountPort {
                 .body(payload)
                 .retrieve()
                 .toBodilessEntity();
+
     }
 
     @Override
-    public void withdrawal(String userId, BigDecimal amount) {
+    public void withdrawal(String userId, BigDecimal amount) throws Exception {
         BankAccount clientAccount = this.findByUserId(userId);
         var payload = Map.of("balance", clientAccount.balance().subtract(amount));
         client.put()
@@ -54,7 +58,7 @@ public class MockApiAdapter implements BankAccountPort {
     }
 
     @Override
-    public void transfer(String sourceId, String targetId, BigDecimal amount) {
+    public void transfer(String sourceId, String targetId, BigDecimal amount) throws Exception {
 
         BankAccount sourceAccount = this.findByUserId(sourceId);
         BankAccount targetAccount = this.findByUserId(targetId);
@@ -83,6 +87,7 @@ public class MockApiAdapter implements BankAccountPort {
 
     @Override
     public BankAccount findByUserId(String userId) {
+        try {
             BankAccount[] accounts = client.get()
                     .uri(uriBuilder -> uriBuilder
                             .path(endpoint)
@@ -90,10 +95,11 @@ public class MockApiAdapter implements BankAccountPort {
                             .build())
                     .retrieve()
                     .body(BankAccount[].class);
-
-            if (accounts == null || accounts.length == 0) {
-                throw new RuntimeException("Não foi possivel encontrar conta com o userId " + userId);
-            }
             return accounts[0];
+        } catch (Exception e){
+            return new BankAccount(null, null, null, null, false, null);
+        }
+
+
     }
 }

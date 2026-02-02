@@ -9,8 +9,6 @@ import java.util.UUID;
 
 public interface UserRepository {
 
-    boolean existsByCpf(String cpf);
-    boolean existsByEmail(String email);
     User saveUser(User user);
     User updateUser(User user);
     PaginatedResponse<User> findAllActive(PageDataDomain pageData);
