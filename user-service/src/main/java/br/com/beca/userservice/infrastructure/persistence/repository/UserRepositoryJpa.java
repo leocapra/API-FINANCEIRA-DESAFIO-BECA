@@ -23,8 +23,10 @@ public interface UserRepositoryJpa extends JpaRepository<UserJpa, UUID> {
 
     Optional<UserJpa> findByEmail(String email);
 
-    Optional<UserJpa> findByActiveTrueAndCpf(String cpf);
+    Optional<UserJpa> findByEmailAndActiveTrue(String email);
 
     Optional<UserJpa> findByIdAndActiveTrue(UUID id);
+
+    Optional<UserJpa> findByIdAndActiveFalse(UUID id);
 
 }

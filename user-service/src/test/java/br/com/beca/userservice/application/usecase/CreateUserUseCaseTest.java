@@ -1,7 +1,9 @@
 package br.com.beca.userservice.application.usecase;
 
-import br.com.beca.userservice.application.repository.UserRepository;
-import br.com.beca.userservice.domain.PasswordHasher;
+import br.com.beca.userservice.application.port.BankAccountPort;
+import br.com.beca.userservice.application.port.PasswordHasher;
+import br.com.beca.userservice.application.port.UserRepository;
+import br.com.beca.userservice.domain.dto.RequestUserData;
 import br.com.beca.userservice.domain.exception.AlreadyExistsException;
 import br.com.beca.userservice.domain.exception.FieldIsEmptyException;
 import br.com.beca.userservice.domain.exception.RegexpException;
@@ -9,308 +11,225 @@ import br.com.beca.userservice.domain.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.*;
 
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+/**
+ * Cobertura total para CreateUserUseCase.execute:
+ *  - Campos obrigatórios vazios/nulos
+ *  - Falhas de validação (CPF/Email/Telefone) conforme RegexpValidation real
+ *  - CPF existente (reativa se inativo, lança se ativo)
+ *  - Email existente (reativa se inativo, lança se ativo)
+ *  - Criação de novo usuário (email lower-case, hash de senha, conta bancária)
+ */
+@ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
 class CreateUserUseCaseTest {
 
-    @Mock
-    private UserRepository userRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private PasswordHasher passwordHasher;
+    @Mock private BankAccountPort bankAccount;
 
-    @Mock
-    private PasswordHasher passwordHasher;
+    // Mocks do agregado User para diferentes papéis
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS) private User userFactory;  // record field 'user' usado como "factory"
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS) private User existingUser;
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS) private User updatedUser;
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS) private User newUser;
+    @Mock(answer = Answers.RETURNS_DEEP_STUBS) private User createdUser;
 
     private CreateUserUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new CreateUserUseCase(userRepository, passwordHasher);
+        useCase = new CreateUserUseCase(userRepository, passwordHasher, userFactory, bankAccount);
     }
 
-    private User validUserRawPassword() {
-        return new User(
-                "123.456.789-09",
+    // ---------- Helpers ----------
+    private RequestUserData validDtoUpperEmail() {
+        // Constrói DTO com TODOS os campos atendendo ao regex fornecido
+        // Email propositalmente em MAIÚSCULAS para validar conversão para lower-case no fluxo de criação
+        return new RequestUserData(
+                "123.456.789-01",
                 "Leonardo",
-                "leo@email.com",
-                "Senha@123",
+                "LEO@MAIL.COM",
+                "Senha!123",
                 "+55 11 91234-5678"
         );
     }
 
-    // -------------------------
-    // Campos obrigatórios
-    // -------------------------
-
+    // ---------- Campos vazios/nulos ----------
     @Test
-    void shouldThrowFieldIsEmptyException_whenCpfIsNull() {
-        User user = new User(null, "Leonardo", "leo@email.com", "Senha@123", "+55 11 91234-5678");
-
-        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(user));
-        assertEquals("Campo cpf não pode ser vazio!", ex.getMessage());
-
-        verifyNoInteractions(userRepository, passwordHasher);
+    void deveLancar_FieldIsEmpty_quandoCpfVazio() {
+        RequestUserData dto = new RequestUserData("  ", "Nome", "a@b.com", "s", "+55 11 91234-5678");
+        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("cpf"));
     }
 
     @Test
-    void shouldThrowFieldIsEmptyException_whenNomeIsBlank() {
-        User user = new User("123.456.789-09", " ", "leo@email.com", "Senha@123", "+55 11 91234-5678");
-
-        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(user));
-        assertEquals("Campo nome não pode ser vazio!", ex.getMessage());
-
-        verifyNoInteractions(userRepository, passwordHasher);
+    void deveLancar_FieldIsEmpty_quandoNomeNulo() {
+        RequestUserData dto = new RequestUserData("123.456.789-01", null, "a@b.com", "s", "+55 11 91234-5678");
+        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("nome"));
     }
 
     @Test
-    void shouldThrowFieldIsEmptyException_whenEmailIsBlank() {
-        User user = new User("123.456.789-09", "Leonardo", " ", "Senha@123", "+55 11 91234-5678");
-
-        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(user));
-        assertEquals("Campo email não pode ser vazio!", ex.getMessage());
-
-        verifyNoInteractions(userRepository, passwordHasher);
+    void deveLancar_FieldIsEmpty_quandoEmailVazio() {
+        RequestUserData dto = new RequestUserData("123.456.789-01", "Nome", "   ", "s", "+55 11 91234-5678");
+        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("email"));
     }
 
     @Test
-    void shouldThrowFieldIsEmptyException_whenSenhaIsBlank() {
-        User user = new User("123.456.789-09", "Leonardo", "leo@email.com", " ", "+55 11 91234-5678");
-
-        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(user));
-        assertEquals("Campo senha não pode ser vazio!", ex.getMessage());
-
-        verifyNoInteractions(userRepository, passwordHasher);
+    void deveLancar_FieldIsEmpty_quandoSenhaNula() {
+        RequestUserData dto = new RequestUserData("123.456.789-01", "Nome", "a@b.com", null, "+55 11 91234-5678");
+        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("senha"));
     }
 
     @Test
-    void shouldThrowFieldIsEmptyException_whenTelefoneIsBlank() {
-        User user = new User("123.456.789-09", "Leonardo", "leo@email.com", "Senha@123", " ");
-
-        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(user));
-        assertEquals("Campo telefone não pode ser vazio!", ex.getMessage());
-
-        verifyNoInteractions(userRepository, passwordHasher);
+    void deveLancar_FieldIsEmpty_quandoTelefoneVazio() {
+        RequestUserData dto = new RequestUserData("123.456.789-01", "Nome", "a@b.com", "s", " ");
+        FieldIsEmptyException ex = assertThrows(FieldIsEmptyException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("telefone"));
     }
 
-    // -------------------------
-    // CPF existente
-    // -------------------------
+    // ---------- Regex inválidos (usando o regex real) ----------
+    @Test
+    void deveLancar_Regexp_quandoCpfInvalido() {
+        // CPF inválido (sem pontos e hífen conforme regex: ^\d{3}.\d{3}.\d{3}-\d{2}$)
+        RequestUserData dto = new RequestUserData("12345678901", "Nome", "a@b.com", "Senha!123", "+55 11 91234-5678");
+        RegexpException ex = assertThrows(RegexpException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("CPF 12345678901"));
+    }
 
     @Test
-    void shouldThrowAlreadyExistsException_whenCpfExistsAndActive() {
-        User input = validUserRawPassword();
-        User existing = new User(UUID.fromString("11111111-1111-1111-1111-11111111111"), input.getCpf(), "Outro", "outro@email.com", "x", "+55 11 91234-5678");
+    void deveLancar_Regexp_quandoEmailInvalido() {
+        // Email inválido (faltando '@' por exemplo)
+        RequestUserData dto = new RequestUserData("123.456.789-01", "Nome", "email-invalido", "Senha!123", "+55 11 91234-5678");
+        RegexpException ex = assertThrows(RegexpException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("Email email-invalido"));
+    }
 
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.of(existing));
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
+    @Test
+    void deveLancar_Regexp_quandoTelefoneInvalido() {
+        // Telefone inválido (faltando +código país e espaços conforme ^\+\d{1,3}\s\d{2}\s9\d{4}-\d{4}$)
+        RequestUserData dto = new RequestUserData("123.456.789-01", "Nome", "a@b.com", "Senha!123", "1191234-5678");
+        RegexpException ex = assertThrows(RegexpException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("Telefone 1191234-5678"));
+    }
 
-        AlreadyExistsException ex = assertThrows(AlreadyExistsException.class, () -> useCase.execute(input));
-        assertTrue(ex.getMessage().contains("CPF " + input.getCpf()));
+    // ---------- Fluxo: CPF já cadastrado ----------
+    @Test
+    void deveReativarUsuario_quandoCpfEncontradoEUsuarioInativo() throws Exception, FieldIsEmptyException, RegexpException {
+        RequestUserData dto = validDtoUpperEmail();
+        String emailLower = dto.email().toLowerCase();
 
+        when(userRepository.findByCpf(dto.cpf())).thenReturn(Optional.of(existingUser));
+        when(existingUser.isActive()).thenReturn(false);
+        when(existingUser.getEmail()).thenReturn(emailLower);
+        when(userRepository.updateUser(existingUser)).thenReturn(updatedUser);
+
+        User result = useCase.execute(dto);
+
+        assertSame(updatedUser, result);
+        verify(existingUser).activate();
+        verify(bankAccount).createAccountForUser(anyString(), eq(emailLower));
+        verify(userRepository).updateUser(existingUser);
+
+        // Não deve tentar criar novo usuário, nem buscar por email (retorno antecipado)
         verify(userRepository, never()).saveUser(any());
-        verifyNoInteractions(passwordHasher);
+        verify(userRepository, never()).findByEmail(anyString());
     }
 
     @Test
-    void shouldReactivateAndSave_whenCpfExistsAndInactive() throws FieldIsEmptyException, RegexpException {
-        User input = validUserRawPassword();
-        User existing = new User(UUID.fromString("11111111-1111-1111-1111-11111111111"), input.getCpf(), "Nome Antigo", "antigo@email.com", "x", "+55 11 91234-5678");
-        existing.deactivate();
+    void deveLancar_AlreadyExists_quandoCpfEncontradoEUsuarioAtivo() {
+        RequestUserData dto = validDtoUpperEmail();
 
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.of(existing));
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
+        when(userRepository.findByCpf(dto.cpf())).thenReturn(Optional.of(existingUser));
+        when(existingUser.isActive()).thenReturn(true);
 
-        // como o use case salva o INPUT, stub tem que ser pro input (ou any)
-        when(passwordHasher.isHashed(anyString())).thenReturn(true);
-        when(userRepository.saveUser(input)).thenAnswer(inv -> inv.getArgument(0));
-
-        User saved = useCase.execute(input);
-
-        assertTrue(existing.isActive(), "Deveria reativar o usuário existente encontrado");
-        assertSame(input, saved, "O use case salva/retorna o input (não o existing)");
-
-        verify(userRepository).saveUser(input);
-        verify(passwordHasher).isHashed(anyString());
-        verify(passwordHasher, never()).hash(anyString());
-    }
-
-    // -------------------------
-    // Email existente
-    // -------------------------
-
-    @Test
-    void shouldThrowAlreadyExistsException_whenEmailExistsAndActive() {
-        User input = validUserRawPassword();
-        User existing = new User(UUID.fromString("11111111-1111-1111-1111-11111111111"), "999.999.999-99", "Outro", input.getEmail(), "x", "+55 11 91234-5678");
-
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.of(existing));
-
-        AlreadyExistsException ex = assertThrows(AlreadyExistsException.class, () -> useCase.execute(input));
-        assertTrue(ex.getMessage().contains("Email " + input.getEmail()));
-
+        AlreadyExistsException ex = assertThrows(AlreadyExistsException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("CPF " + dto.cpf()));
+        verify(userRepository, never()).updateUser(any());
+        verify(bankAccount, never()).createAccountForUser(anyString(), anyString());
+        verify(userRepository, never()).findByEmail(anyString());
         verify(userRepository, never()).saveUser(any());
-        verifyNoInteractions(passwordHasher);
     }
 
+    // ---------- Fluxo: Email já cadastrado ----------
     @Test
-    void shouldReactivateAndSave_whenEmailExistsAndInactive() throws FieldIsEmptyException, RegexpException {
-        User input = validUserRawPassword();
-        User existing = new User(UUID.fromString("11111111-1111-1111-1111-11111111111"), "999.999.999-99", "Outro", input.getEmail(), "x", "+55 11 91234-5678");
-        existing.deactivate();
+    void deveReativarUsuario_quandoEmailEncontradoEUsuarioInativo() throws Exception, FieldIsEmptyException, RegexpException {
+        RequestUserData dto = validDtoUpperEmail();
+        String emailLower = dto.email().toLowerCase();
 
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.of(existing));
+        when(userRepository.findByCpf(dto.cpf())).thenReturn(Optional.empty());
+        // Importante: o código consulta findByEmail(dto.email()) ANTES de lower-case
+        when(userRepository.findByEmail(dto.email())).thenReturn(Optional.of(existingUser));
 
-        // como o use case salva o INPUT, stub tem que ser pro input (ou any)
-        when(passwordHasher.isHashed(anyString())).thenReturn(true);
-        when(userRepository.saveUser(input)).thenAnswer(inv -> inv.getArgument(0));
+        when(existingUser.isActive()).thenReturn(false);
+        when(existingUser.getEmail()).thenReturn(emailLower);
+        when(userRepository.updateUser(existingUser)).thenReturn(updatedUser);
 
-        User saved = useCase.execute(input);
+        User result = useCase.execute(dto);
 
-        assertTrue(existing.isActive(), "Deveria reativar o usuário existente encontrado");
-        assertSame(input, saved, "O use case salva/retorna o input (não o existing)");
-
-        verify(userRepository).saveUser(input);
-        verify(passwordHasher).isHashed(anyString());
-        verify(passwordHasher, never()).hash(anyString());
-    }
-
-    // -------------------------
-    // Regex inválidos reais
-    // -------------------------
-
-    @Test
-    void shouldThrowRegexpException_whenCpfInvalid() {
-        User input = new User(
-                "12345678909",
-                "Leonardo",
-                "leo@email.com",
-                "Senha@123",
-                "+55 11 91234-5678"
-        );
-
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
-
-        RegexpException ex = assertThrows(RegexpException.class, () -> useCase.execute(input));
-        assertTrue(ex.getMessage().contains("CPF " + input.getCpf()));
-
+        assertSame(updatedUser, result);
+        verify(existingUser).activate();
+        verify(bankAccount).createAccountForUser(anyString(), eq(emailLower));
+        verify(userRepository).updateUser(existingUser);
         verify(userRepository, never()).saveUser(any());
-        verifyNoInteractions(passwordHasher);
     }
 
     @Test
-    void shouldThrowRegexpException_whenEmailInvalid() {
-        User input = new User(
-                "123.456.789-09",
-                "Leonardo",
-                "leo-email.com",
-                "Senha@123",
-                "+55 11 91234-5678"
-        );
+    void deveLancar_AlreadyExists_quandoEmailEncontradoEUsuarioAtivo() {
+        RequestUserData dto = validDtoUpperEmail();
 
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
+        when(userRepository.findByCpf(dto.cpf())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(dto.email())).thenReturn(Optional.of(existingUser));
+        when(existingUser.isActive()).thenReturn(true);
 
-        RegexpException ex = assertThrows(RegexpException.class, () -> useCase.execute(input));
-        assertTrue(ex.getMessage().contains("Email " + input.getEmail()));
-
+        AlreadyExistsException ex = assertThrows(AlreadyExistsException.class, () -> useCase.execute(dto));
+        assertTrue(ex.getMessage().contains("Email " + dto.email()));
+        verify(userRepository, never()).updateUser(any());
+        verify(bankAccount, never()).createAccountForUser(anyString(), anyString());
         verify(userRepository, never()).saveUser(any());
-        verifyNoInteractions(passwordHasher);
     }
 
+    // ---------- Fluxo: Criação de novo usuário ----------
     @Test
-    void shouldThrowRegexpException_whenTelefoneInvalid() {
-        User input = new User(
-                "123.456.789-09",
-                "Leonardo",
-                "leo@email.com",
-                "Senha@123",
-                "11 91234-5678"
-        );
+    void deveCriarNovoUsuario_comEmailLowerCase_hashSenha_eContaBancaria() throws Exception, FieldIsEmptyException, RegexpException {
+        RequestUserData dto = validDtoUpperEmail();
+        String emailLower = dto.email().toLowerCase();
 
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
+        when(userRepository.findByCpf(dto.cpf())).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(dto.email())).thenReturn(Optional.empty());
 
-        RegexpException ex = assertThrows(RegexpException.class, () -> useCase.execute(input));
-        assertTrue(ex.getMessage().contains("Telefone " + input.getTelefone()));
+        // Captura o email passado ao factory para garantir conversão para lower-case
+        ArgumentCaptor<String> emailCaptor = ArgumentCaptor.forClass(String.class);
 
-        verify(userRepository, never()).saveUser(any());
-        verifyNoInteractions(passwordHasher);
-    }
+        when(userFactory.createUser(
+                eq(dto.cpf()),
+                eq(dto.nome()),
+                emailCaptor.capture(),
+                eq(dto.senha()),
+                eq(dto.telefone())
+        )).thenReturn(newUser);
 
-    // -------------------------
-    // Hash de senha
-    // -------------------------
+        when(userRepository.saveUser(newUser)).thenReturn(createdUser);
+        when(createdUser.getEmail()).thenReturn(emailLower);
 
-    @Test
-    void shouldHashPassword_whenNotHashed() throws FieldIsEmptyException, RegexpException {
-        User input = validUserRawPassword();
+        User result = useCase.execute(dto);
 
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
+        assertSame(createdUser, result);
+        assertEquals(emailLower, emailCaptor.getValue(), "Email deve ser convertido para lower-case na criação");
+        verify(newUser).ensurePasswordHashed(passwordHasher);
+        verify(userRepository).saveUser(newUser);
+        verify(bankAccount).createAccountForUser(anyString(), eq(emailLower));
 
-        when(passwordHasher.isHashed("Senha@123")).thenReturn(false);
-        when(passwordHasher.hash("Senha@123")).thenReturn("$2a$12$HASH");
-
-        when(userRepository.saveUser(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        User saved = useCase.execute(input);
-
-        assertEquals("$2a$12$HASH", saved.getSenha());
-        verify(passwordHasher).hash("Senha@123");
-    }
-
-    @Test
-    void shouldNotHashPassword_whenAlreadyHashed() throws FieldIsEmptyException, RegexpException {
-        User input = new User(
-                "123.456.789-09",
-                "Leonardo",
-                "leo@email.com",
-                "$2a$12$6ZsbdL5g2dj9q.uI8wceUOz9tylxcFEYg9RKXbZqM1BcSxXqG0QZq",
-                "+55 11 91234-5678"
-        );
-
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
-
-        when(passwordHasher.isHashed(input.getSenha())).thenReturn(true);
-        when(userRepository.saveUser(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        User saved = useCase.execute(input);
-
-        assertEquals(input.getSenha(), saved.getSenha());
-        verify(passwordHasher, never()).hash(anyString());
-    }
-
-    // -------------------------
-    // Caminho feliz
-    // -------------------------
-
-    @Test
-    void shouldSaveUser_whenAllValid() throws FieldIsEmptyException, RegexpException {
-        User input = validUserRawPassword();
-
-        when(userRepository.findByCpf(input.getCpf())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(input.getEmail())).thenReturn(Optional.empty());
-
-        when(passwordHasher.isHashed(input.getSenha())).thenReturn(false);
-        when(passwordHasher.hash(input.getSenha())).thenReturn("$2a$12$HASH");
-
-        when(userRepository.saveUser(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        User saved = useCase.execute(input);
-
-        assertNotNull(saved);
-        assertEquals("$2a$12$HASH", saved.getSenha());
-        verify(userRepository).saveUser(saved);
+        // Não deve chamar updateUser nesse fluxo
+        verify(userRepository, never()).updateUser(any());
     }
 }

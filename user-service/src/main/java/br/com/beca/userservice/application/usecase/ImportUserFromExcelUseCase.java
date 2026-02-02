@@ -1,24 +1,38 @@
 package br.com.beca.userservice.application.usecase;
 
+import br.com.beca.userservice.domain.dto.ImportErrorDetails;
 import br.com.beca.userservice.domain.dto.ImportResponseData;
 import br.com.beca.userservice.domain.dto.ImportUserRequestData;
+import br.com.beca.userservice.domain.dto.RequestUserData;
+import br.com.beca.userservice.domain.exception.AlreadyExistsException;
 import br.com.beca.userservice.domain.exception.FieldIsEmptyException;
 import br.com.beca.userservice.domain.exception.RegexpException;
-import br.com.beca.userservice.domain.model.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public record ImportUserFromExcelUseCase(CreateUserUseCase createUserUseCase) {
 
     public ImportResponseData execute(List<ImportUserRequestData> dtos) {
+        if (dtos == null || dtos.isEmpty()) {
+            return new ImportResponseData(0, 0, 0, List.of());
+        }
 
-        int total = 0, success = 0, failed = 0;
+        int totalRows = 0;
+        int imported = 0;
+        int failed = 0;
+        List<ImportErrorDetails> errors = new ArrayList<>();
 
         for (ImportUserRequestData dto : dtos) {
-            total++;
+            totalRows++;
+
+            String identifier = null;
+            if (dto != null && dto.cpf() != null) {
+                identifier = dto.cpf().trim();
+            }
 
             try {
-                User user = new User(
+                RequestUserData newDto = new RequestUserData(
                         dto.cpf(),
                         dto.nome(),
                         dto.email(),
@@ -26,19 +40,21 @@ public record ImportUserFromExcelUseCase(CreateUserUseCase createUserUseCase) {
                         dto.telefone()
                 );
 
-                createUserUseCase.execute(user);
-                success++;
+                createUserUseCase.execute(newDto);
+                imported++;
+
+            } catch (AlreadyExistsException | FieldIsEmptyException | RegexpException e) {
+                failed++;
+                String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                errors.add(new ImportErrorDetails(identifier, msg));
 
             } catch (Exception e) {
                 failed++;
-            } catch (FieldIsEmptyException e) {
-                throw new RuntimeException(e);
-            } catch (RegexpException e) {
-                throw new RuntimeException(e);
+                String base = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+                errors.add(new ImportErrorDetails(identifier, "Erro inesperado: " + base));
             }
         }
 
-        return new ImportResponseData(total, success, failed);
+        return new ImportResponseData(totalRows, imported, failed, errors);
     }
-
 }

@@ -1,11 +1,14 @@
 package br.com.beca.transactionservice.infrastructure.persistence.model;
 
+import br.com.beca.transactionservice.domain.model.BuyType;
 import br.com.beca.transactionservice.domain.model.TransactionStatus;
 import br.com.beca.transactionservice.domain.model.TransactionType;
+import br.com.beca.transactionservice.domain.model.TransferType;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -40,18 +43,51 @@ public class TransactionEntity {
     private String category;
 
     @Column(nullable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
-    private Instant processedAt;
+    private LocalDateTime processedAt;
 
     @Column(nullable = false)
     private String correlationId;
 
     private String rejectionReason;
 
+    private BigDecimal brl;
+
+    private BigDecimal fxRate;
+
+    private Boolean record;
+
+    @Enumerated(EnumType.STRING)
+    private TransferType transferType;
+
+    @Enumerated(EnumType.STRING)
+    private BuyType buyType;
+
+
     public TransactionEntity() {}
 
-    public TransactionEntity(UUID id, UUID userId, TransactionType type, TransactionStatus status, BigDecimal amount, String currency, UUID sourceAccountId, UUID targetAccountId, String description, String category, Instant createdAt, Instant processedAt, String correlationId, String rejectionReason) {
+    public TransactionEntity(
+            UUID id,
+            UUID userId,
+            TransactionType type,
+            TransactionStatus status,
+            BigDecimal amount,
+            String currency,
+            UUID sourceAccountId,
+            UUID targetAccountId,
+            String description,
+            String category,
+            LocalDateTime createdAt,
+            LocalDateTime processedAt,
+            String correlationId,
+            String rejectionReason,
+            BigDecimal brl,
+            BigDecimal fxRate,
+            Boolean record,
+            TransferType transferType,
+            BuyType buyType
+    ) {
         this.id = id;
         this.userId = userId;
         this.type = type;
@@ -66,6 +102,11 @@ public class TransactionEntity {
         this.processedAt = processedAt;
         this.correlationId = correlationId;
         this.rejectionReason = rejectionReason;
+        this.brl = brl;
+        this.fxRate = fxRate;
+        this.record = record;
+        this.transferType = transferType;
+        this.buyType = buyType;
     }
 
     public UUID getId() {
@@ -108,11 +149,11 @@ public class TransactionEntity {
         return category;
     }
 
-    public Instant getCreatedAt() {
+    public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-    public Instant getProcessedAt() {
+    public LocalDateTime getProcessedAt() {
         return processedAt;
     }
 
@@ -122,5 +163,25 @@ public class TransactionEntity {
 
     public String getRejectionReason() {
         return rejectionReason;
+    }
+
+    public BigDecimal getBrl() {
+        return brl;
+    }
+
+    public BigDecimal getFxRate() {
+        return fxRate;
+    }
+
+    public Boolean getRecord() {
+        return record;
+    }
+
+    public TransferType getTransferType() {
+        return transferType;
+    }
+
+    public BuyType getBuyType() {
+        return buyType;
     }
 }

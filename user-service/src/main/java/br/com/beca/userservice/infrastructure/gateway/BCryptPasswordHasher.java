@@ -1,6 +1,6 @@
 package br.com.beca.userservice.infrastructure.gateway;
 
-import br.com.beca.userservice.domain.PasswordHasher;
+import br.com.beca.userservice.application.port.PasswordHasher;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -12,11 +12,6 @@ public class BCryptPasswordHasher implements PasswordHasher {
     @Override
     public String hash(String rawPassword) {
         return encoder.encode(rawPassword);
-    }
-
-    @Override
-    public boolean matches(String raw, String hashed) {
-        return encoder.matches(raw, hashed);
     }
 
     @Override

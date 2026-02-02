@@ -4,15 +4,16 @@ import br.com.beca.transactionservice.domain.model.Transaction;
 import br.com.beca.transactionservice.domain.valueobject.AccountRef;
 import br.com.beca.transactionservice.domain.valueobject.Money;
 import br.com.beca.transactionservice.infrastructure.persistence.model.TransactionEntity;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Component
 public final class TransactionMapper {
     private TransactionMapper() {}
 
     public static TransactionEntity toEntity(Transaction tx){
 
-        System.out.println("tx.getsource  " + tx.getSourceAccount() + " " + tx.getTargetAccount());
         return new TransactionEntity(
                 tx.getId(),
                 tx.getUserId(),
@@ -27,11 +28,16 @@ public final class TransactionMapper {
                 tx.getCreatedAt(),
                 tx.getProcessAt(),
                 tx.getCorrelationId(),
-                tx.getRejectionReason()
+                tx.getRejectionReason(),
+                tx.getBrl(),
+                tx.getFxRate(),
+                tx.getRecord(),
+                tx.getTransferType(),
+                tx.getBuyType()
         );
     }
 
-    public static Transaction toDomain(TransactionEntity tx){
+    public Transaction toDomain(TransactionEntity tx){
         return new Transaction(
                 tx.getId(),
                 tx.getUserId(),
@@ -45,7 +51,12 @@ public final class TransactionMapper {
                 tx.getRejectionReason(),
                 tx.getCreatedAt(),
                 tx.getProcessedAt(),
-                tx.getCorrelationId()
+                tx.getCorrelationId(),
+                tx.getBrl(),
+                tx.getFxRate(),
+                tx.getRecord(),
+                tx.getTransferType(),
+                tx.getBuyType()
         );
     }
 }

@@ -1,9 +1,8 @@
 package br.com.beca.userservice.infrastructure.persistence.model;
 
+import br.com.beca.userservice.domain.model.Roles;
 import jakarta.persistence.*;
-import org.hibernate.annotations.UuidGenerator;
 import org.jspecify.annotations.Nullable;
-import org.springframework.cglib.core.Local;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -28,11 +27,14 @@ public class UserJpa implements UserDetails {
     private boolean active;
     private LocalDate createdAt;
     private LocalDate updatedAt;
+    @Enumerated(value = EnumType.STRING)
+    private Roles roles;
 
     public UserJpa(){}
 
-    public UserJpa(String cpf, String nome, String email, String senha, String telefone, boolean active, LocalDate createdAt, LocalDate updatedAt) {
+    public UserJpa(String cpf, Roles roles, String nome, String email, String senha, String telefone, boolean active, LocalDate createdAt, LocalDate updatedAt) {
         this.cpf = cpf;
+        this.roles = roles;
         this.nome = nome;
         this.email = email;
         this.senha = senha;
@@ -57,6 +59,11 @@ public class UserJpa implements UserDetails {
     public void deactivate() {
         if (!this.active) throw new IllegalStateException("Usuário já esta inativo!");
         this.active = false;
+    }
+
+    public void activate() {
+        if (this.active) throw new IllegalStateException("Usuário já esta ativo!");
+        this.active = true;
     }
 
 
@@ -112,9 +119,13 @@ public class UserJpa implements UserDetails {
         this.updatedAt = updatedAt;
     }
 
+    public Roles getRoles() {
+        return roles;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        return List.of(new SimpleGrantedAuthority(this.roles.toString()));
     }
 
     @Override
